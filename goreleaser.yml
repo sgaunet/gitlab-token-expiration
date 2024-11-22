@@ -9,9 +9,9 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
-    dir: cmd
+    # dir: cmd
     ldflags:
-      - -X main.version={{.Version}}
+      - -X github.com/sgaunet/gitlab-token-expiration/cmd.version={{.Version}}
     goos:
       - linux
       - darwin
