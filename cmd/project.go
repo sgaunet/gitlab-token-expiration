@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
+	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/spf13/cobra"
 )
@@ -33,10 +34,11 @@ var projectCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		err = a.ListTokensOfProject(ctx, project)
+		tokens, err := a.GetTokensOfProjects(ctx, []gitlab.GitlabProject{project})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+		v.Render(tokens)
 	},
 }

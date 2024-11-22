@@ -23,11 +23,12 @@ var patCmd = &cobra.Command{
 		// a.SetLogger(l)
 		ctx := context.Background()
 
-		err := a.ListPersonalAccessTokens(ctx)
+		tokens, err := a.GetPersonalAccessTokens(ctx)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+		v.Render(tokens)
 	},
 }
 
