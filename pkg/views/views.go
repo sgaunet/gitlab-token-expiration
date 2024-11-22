@@ -1,12 +1,7 @@
 package views
 
-import (
-	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
-)
+import "github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 
-type Printer interface {
-	PrintGitlabPersonalAccessToken(t []gitlab.PersonalAccessToken) error
-	PrintGitlabProjectAccessToken(t []gitlab.ProjectAccessToken) error
-	PrintGitlabGroupAccessToken(t []gitlab.GroupAccessToken) error
-	PrintGitlabGroupDeployToken(t []gitlab.GroupDeployToken) error
+type Renderer interface {
+	Render(tokens []dto.Token) error
 }

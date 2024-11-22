@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
+	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 )
 
 type TableOutput struct {
@@ -22,14 +22,15 @@ func NewTableOutput(headerOption, colorOption bool) TableOutput {
 	}
 }
 
-func (t TableOutput) PrintGitlabPersonalAccessToken(tokens []gitlab.PersonalAccessToken) error {
+func (t TableOutput) Render(tokens []dto.Token) error {
 	tData := pterm.TableData{
-		{"ID", "Name", "Revoked", "Last used at", "Active", "Expires at"},
+		{"ID", "Source", "Type", "Name", "Revoked", "Expires at"},
 	}
 	for _, token := range tokens {
-		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
-			prettyPrintBool(token.Revoked, true), prettyPrintGitlabTime(token.LastUsedAt),
-			prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
+		tData = append(tData, []string{fmt.Sprintf("%d", token.ID),
+			token.Source, token.Type, token.Name,
+			prettyPrintBool(token.Revoked, true),
+			prettyPrintExpiresAt(token.ExpiresAt)})
 	}
 	// Create a table with a header and the defined data, then render it
 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
@@ -83,54 +84,54 @@ func prettyPrintExpiresAt(d string) string {
 	return d
 }
 
-func (t TableOutput) PrintGitlabProjectAccessToken(tokens []gitlab.ProjectAccessToken) error {
-	tData := pterm.TableData{
-		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
-	}
-	for _, token := range tokens {
-		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
-			prettyPrintBool(token.Revoked, true),
-			fmt.Sprintf("%d", token.UserId),
-			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
-	}
-	// Create a table with a header and the defined data, then render it
-	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-	if err != nil {
-		return fmt.Errorf("error rendering table: %w", err)
-	}
-	return nil
-}
+// func (t TableOutput) PrintGitlabProjectAccessToken(tokens []gitlab.ProjectAccessToken) error {
+// 	tData := pterm.TableData{
+// 		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
+// 	}
+// 	for _, token := range tokens {
+// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
+// 			prettyPrintBool(token.Revoked, true),
+// 			fmt.Sprintf("%d", token.UserId),
+// 			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
+// 	}
+// 	// Create a table with a header and the defined data, then render it
+// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
+// 	if err != nil {
+// 		return fmt.Errorf("error rendering table: %w", err)
+// 	}
+// 	return nil
+// }
 
-func (t TableOutput) PrintGitlabGroupAccessToken(tokens []gitlab.GroupAccessToken) error {
-	tData := pterm.TableData{
-		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
-	}
-	for _, token := range tokens {
-		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
-			prettyPrintBool(token.Revoked, true),
-			fmt.Sprintf("%d", token.UserId),
-			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
-	}
-	// Create a table with a header and the defined data, then render it
-	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-	if err != nil {
-		return fmt.Errorf("error rendering table: %w", err)
-	}
-	return nil
-}
+// func (t TableOutput) PrintGitlabGroupAccessToken(tokens []gitlab.GroupAccessToken) error {
+// 	tData := pterm.TableData{
+// 		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
+// 	}
+// 	for _, token := range tokens {
+// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
+// 			prettyPrintBool(token.Revoked, true),
+// 			fmt.Sprintf("%d", token.UserId),
+// 			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
+// 	}
+// 	// Create a table with a header and the defined data, then render it
+// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
+// 	if err != nil {
+// 		return fmt.Errorf("error rendering table: %w", err)
+// 	}
+// 	return nil
+// }
 
-func (t TableOutput) PrintGitlabGroupDeployToken(tokens []gitlab.GroupDeployToken) error {
-	tData := pterm.TableData{
-		{"ID", "Name", "Username", "Expires at", "Revoked", "Expired"},
-	}
-	for _, token := range tokens {
-		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name, token.Username,
-			prettyPrintExpiresAt(token.ExpiresAt), prettyPrintBool(token.Revoked, true), prettyPrintBool(token.Expired, true)})
-	}
-	// Create a table with a header and the defined data, then render it
-	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-	if err != nil {
-		return fmt.Errorf("error rendering table: %w", err)
-	}
-	return nil
-}
+// func (t TableOutput) PrintGitlabGroupDeployToken(tokens []gitlab.GroupDeployToken) error {
+// 	tData := pterm.TableData{
+// 		{"ID", "Name", "Username", "Expires at", "Revoked", "Expired"},
+// 	}
+// 	for _, token := range tokens {
+// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name, token.Username,
+// 			prettyPrintExpiresAt(token.ExpiresAt), prettyPrintBool(token.Revoked, true), prettyPrintBool(token.Expired, true)})
+// 	}
+// 	// Create a table with a header and the defined data, then render it
+// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
+// 	if err != nil {
+// 		return fmt.Errorf("error rendering table: %w", err)
+// 	}
+// 	return nil
+// }
