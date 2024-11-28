@@ -5,7 +5,6 @@ go 1.23.2
 require (
 	github.com/fatih/color v1.18.0
 	github.com/pterm/pterm v0.12.79
-	github.com/savioxavier/termlink v1.4.1
 	github.com/spf13/cobra v1.8.1
 )
 
