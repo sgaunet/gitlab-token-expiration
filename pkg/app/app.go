@@ -93,12 +93,6 @@ func (a *App) GetTokensOfGroups(ctx context.Context, groups []gitlab.GitlabGroup
 		}
 		tokens = append(tokens, dtoTokens...)
 
-		// if len(groupAccessTokens) != 0 {
-		// 	fmt.Printf("\n%s\n\n",
-		// 		termlink.Link(fmt.Sprintf("# Group Access Tokens - %s", group.Path),
-		// 			fmt.Sprintf("%s/-/settings/access_tokens", group.WebUrl)))
-		// 	_ = a.view.PrintGitlabGroupAccessToken(groupAccessTokens)
-		// }
 		// Get deploy tokens of the group
 		groupDeployTokens, err := a.gitlabService.GetGroupDeployTokens(group.Id)
 		if err != nil {
@@ -110,61 +104,11 @@ func (a *App) GetTokensOfGroups(ctx context.Context, groups []gitlab.GitlabGroup
 			dtoTokens[i].Source = group.Path
 		}
 		tokens = append(tokens, dtoTokens...)
-		// if len(groupDeployTokens) != 0 {
-		// 	fmt.Printf("\n# Group Deploy Tokens: %s\n\n", group.Name)
-		// 	fmt.Printf("\n%s\n\n", termlink.Link(fmt.Sprintf("# Group Deploy Tokens - %s", group.Path),
-		// 		fmt.Sprintf("%s/-/settings/repository", group.WebUrl)))
-		// 	_ = a.view.PrintGitlabGroupDeployToken(groupDeployTokens)
-		// }
 	}
 	return tokens, nil
 }
 
-// 	// Get projects of the group
-// 	projects, err := a.gitlabService.GetProjectsOfGroup(group.Id)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for project := range projects {
-// 		if !projects[project].Archived {
-// 			err = a.ListTokensOfProject(ctx, projects[project])
-// 			if err != nil {
-// 				a.log.Error("error occured during backup", "project name", projects[project].Name, "error", err.Error())
-// 				return err
-// 			}
-// 		} else {
-// 			a.log.Info("project is archived, skip", "project name", projects[project].Name)
-// 		}
-// 	}
-// 	return nil
-// }
-
-// func (a *App) RenderTokensOfProjects(ctx context.Context, projects []gitlab.GitlabProject) error {
-// 	tokens, err := a.GetTokensOfProjects(ctx, projects)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if len(tokens) != 0 {
-// 		// fmt.Printf("\n%s\n\n",
-// 		// 	termlink.Link(fmt.Sprintf("# Project Access Tokens - %s", project.Name),
-// 		// 		fmt.Sprintf("%s/-/settings/access_tokens", project.WebUrl)))
-// 		a.view.Render(tokens)
-// 	}
-// 	return nil
-// }
-
-// func (a *App) ListPersonalAccessTokens(ctx context.Context) error {
-// 	tokens, err := a.gitlabService.GetPersonalAccessTokens()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if len(tokens) != 0 {
-// 		fmt.Printf("\n%s\n\n", termlink.Link("# Personal Access Tokens", "https://gitlab.com/-/user_settings/personal_access_tokens"))
-// 		a.view.PrintGitlabPersonalAccessToken(tokens)
-// 	}
-// 	return nil
-// }
-
+// GetProject returns the project that matches the given ID
 func (a *App) GetProject(projectID int) (gitlab.GitlabProject, error) {
 	project, err := a.gitlabService.GetProject(projectID)
 	if err != nil {
@@ -173,6 +117,7 @@ func (a *App) GetProject(projectID int) (gitlab.GitlabProject, error) {
 	return project, nil
 }
 
+// GetGroup returns the group that matches the given ID
 func (a *App) GetGroup(groupID int) (gitlab.GitlabGroup, error) {
 	group, err := a.gitlabService.GetGroup(groupID)
 	if err != nil {
@@ -181,6 +126,7 @@ func (a *App) GetGroup(groupID int) (gitlab.GitlabGroup, error) {
 	return group, nil
 }
 
+// GetSubGroups returns the subgroups of the group that matches the given ID
 func (a *App) GetSubGroups(groupID int) ([]gitlab.GitlabGroup, error) {
 	groups, err := a.gitlabService.GetSubgroups(groupID)
 	if err != nil {
@@ -189,6 +135,7 @@ func (a *App) GetSubGroups(groupID int) ([]gitlab.GitlabGroup, error) {
 	return groups, nil
 }
 
+// GetRecursiveProjectsOfGroup returns the projects of the group that matches the given ID
 func (a *App) GetRecursiveProjectsOfGroup(groupID int) ([]gitlab.GitlabProject, error) {
 	projects, err := a.gitlabService.GetProjectsOfGroup(groupID)
 	if err != nil {
@@ -197,18 +144,13 @@ func (a *App) GetRecursiveProjectsOfGroup(groupID int) ([]gitlab.GitlabProject, 
 	return projects, nil
 }
 
+// GetPersonalAccessTokens returns the personal access tokens
 func (a *App) GetPersonalAccessTokens(ctx context.Context) ([]dto.Token, error) {
 	tokens, err := a.gitlabService.GetPersonalAccessTokens()
 	if err != nil {
 		return nil, err
 	}
-	// if len(tokens) != 0 {
-	// 	fmt.Printf("\n%s\n\n", termlink.Link("# Personal Access Tokens", "https://gitlab.com/-/user_settings/personal_access_tokens"))
-	// 	a.view.PrintGitlabPersonalAccessToken(tokens)
-	// }
+
 	res := convertPersonalGitlabTokenToDTOTokens(tokens)
-	if err != nil {
-		return nil, err
-	}
 	return res, nil
 }

@@ -17,7 +17,6 @@ func convertGroupAccessTokenToDTOToken(groupAccessToken gitlab.GroupAccessToken)
 }
 
 func convertGroupDeployTokenToDTOToken(groupDeployToken gitlab.GroupDeployToken) dto.Token {
-	// fmt.Println(termlink.Link(fmt.Sprintf("# Group Deploy Tokens - %s", group.Path), fmt.Sprintf("%s/-/settings/repository", group.WebUrl)))
 	return dto.Token{
 		ID:        groupDeployToken.Id,
 		Name:      groupDeployToken.Name,
