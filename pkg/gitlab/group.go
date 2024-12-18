@@ -31,7 +31,19 @@ type GitlabGroup struct {
 // GetSubgroups returns the list of subgroups of the group
 func (s *GitlabService) GetSubgroups(groupID int) (res []GitlabGroup, err error) {
 	url := fmt.Sprintf("%s/groups/%d/subgroups?per_page=20&order_by=id&sort=asc&pagination=keyset", s.gitlabApiEndpoint, groupID)
-	return s.retrieveSubgroups(url)
+	subgroups, err := s.retrieveSubgroups(url)
+	if err != nil {
+		return res, err
+	}
+	res = append(res, subgroups...)
+	for _, group := range subgroups {
+		sub, err := s.GetSubgroups(group.Id)
+		if err != nil {
+			return res, fmt.Errorf("got error when listing subgroups of %d (%s)", group.Id, err.Error())
+		}
+		res = append(res, sub...)
+	}
+	return res, nil
 }
 
 // GetProjectsOfGroup returns the list of every projects of the group and subgroups
@@ -41,6 +53,7 @@ func (s *GitlabService) GetProjectsOfGroup(groupID int) (res []GitlabProject, er
 		return res, fmt.Errorf("got error when listing subgroups of %d (%s)", groupID, err.Error())
 	}
 	for _, group := range subgroups {
+		// fmt.Println("GetProjectsOfGroup", "groupName", group.Name)
 		projects, err := s.GetProjectsLst(group.Id)
 		if err != nil {
 			return res, fmt.Errorf("got error when listing projects of %d (%s)", group.Id, err.Error())
