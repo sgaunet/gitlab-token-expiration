@@ -1,0 +1,32 @@
+# https://taskfile.dev
+version: '3'
+vars:
+  BINFILE: gitlab-token-expiration
+
+tasks:
+  default:
+    desc: "List tasks"
+    cmds:
+      - task -a
+
+  build:
+    desc: "Build the binary"
+    cmds:
+      - CGO_ENABLED=0 go build cmd/*.go
+
+  doc:
+    desc: "Start godoc server"
+    cmds:
+      - echo http://localhost:6060 
+      - godoc -http=:6060
+
+  snapshot:
+    desc: "Create a snapshot release"
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --clean --snapshot
+    
+  release:
+    desc: "Create a release"
+    cmds:
+      - GITLAB_TOKEN="" goreleaser --clean
+    
