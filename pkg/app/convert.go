@@ -5,7 +5,7 @@ import (
 	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
 )
 
-func convertGroupAccessTokenToDTOToken(groupAccessToken gitlab.GroupAccessToken) dto.Token {
+func ConvertGroupAccessTokenToDTOToken(groupAccessToken gitlab.GroupAccessToken) dto.Token {
 	return dto.Token{
 		ID:        groupAccessToken.Id,
 		Name:      groupAccessToken.Name,
@@ -16,7 +16,7 @@ func convertGroupAccessTokenToDTOToken(groupAccessToken gitlab.GroupAccessToken)
 	}
 }
 
-func convertGroupDeployTokenToDTOToken(groupDeployToken gitlab.GroupDeployToken) dto.Token {
+func ConvertGroupDeployTokenToDTOToken(groupDeployToken gitlab.GroupDeployToken) dto.Token {
 	return dto.Token{
 		ID:        groupDeployToken.Id,
 		Name:      groupDeployToken.Name,
@@ -27,7 +27,7 @@ func convertGroupDeployTokenToDTOToken(groupDeployToken gitlab.GroupDeployToken)
 	}
 }
 
-func convertProjectAccessTokenToDTOToken(projectAccessToken gitlab.ProjectAccessToken) dto.Token {
+func ConvertProjectAccessTokenToDTOToken(projectAccessToken gitlab.ProjectAccessToken) dto.Token {
 	return dto.Token{
 		ID:        projectAccessToken.Id,
 		Name:      projectAccessToken.Name,
@@ -38,7 +38,7 @@ func convertProjectAccessTokenToDTOToken(projectAccessToken gitlab.ProjectAccess
 	}
 }
 
-func convertProjectDeployTokenToDTOToken(projectDeployToken gitlab.PersonalAccessToken) dto.Token {
+func ConvertProjectDeployTokenToDTOToken(projectDeployToken gitlab.PersonalAccessToken) dto.Token {
 	return dto.Token{
 		ID:        projectDeployToken.Id,
 		Name:      projectDeployToken.Name,
@@ -49,7 +49,7 @@ func convertProjectDeployTokenToDTOToken(projectDeployToken gitlab.PersonalAcces
 	}
 }
 
-func convertPersonalGitlabTokenToDTOToken(personalGitlabToken gitlab.PersonalAccessToken) dto.Token {
+func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken gitlab.PersonalAccessToken) dto.Token {
 	return dto.Token{
 		ID:        personalGitlabToken.Id,
 		Name:      personalGitlabToken.Name,
@@ -63,7 +63,7 @@ func convertPersonalGitlabTokenToDTOToken(personalGitlabToken gitlab.PersonalAcc
 func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []gitlab.GroupAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, groupAccessToken := range groupAccessTokens {
-		tokens = append(tokens, convertGroupAccessTokenToDTOToken(groupAccessToken))
+		tokens = append(tokens, ConvertGroupAccessTokenToDTOToken(groupAccessToken))
 	}
 	return tokens
 }
@@ -71,7 +71,7 @@ func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []gitlab.GroupAccessTo
 func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []gitlab.GroupDeployToken) []dto.Token {
 	var tokens []dto.Token
 	for _, groupDeployToken := range groupDeployTokens {
-		tokens = append(tokens, convertGroupDeployTokenToDTOToken(groupDeployToken))
+		tokens = append(tokens, ConvertGroupDeployTokenToDTOToken(groupDeployToken))
 	}
 	return tokens
 }
@@ -79,7 +79,7 @@ func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []gitlab.GroupDeployTo
 func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []gitlab.ProjectAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, projectAccessToken := range projectAccessTokens {
-		tokens = append(tokens, convertProjectAccessTokenToDTOToken(projectAccessToken))
+		tokens = append(tokens, ConvertProjectAccessTokenToDTOToken(projectAccessToken))
 	}
 	return tokens
 }
@@ -87,7 +87,7 @@ func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []gitlab.ProjectAc
 func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []gitlab.PersonalAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, projectDeployToken := range projectDeployTokens {
-		tokens = append(tokens, convertProjectDeployTokenToDTOToken(projectDeployToken))
+		tokens = append(tokens, ConvertProjectDeployTokenToDTOToken(projectDeployToken))
 	}
 	return tokens
 }
@@ -95,7 +95,7 @@ func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []gitlab.PersonalA
 func convertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []gitlab.PersonalAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, personalGitlabToken := range personalGitlabTokens {
-		tokens = append(tokens, convertPersonalGitlabTokenToDTOToken(personalGitlabToken))
+		tokens = append(tokens, ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken))
 	}
 	return tokens
 }
