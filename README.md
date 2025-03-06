@@ -39,3 +39,16 @@ task: Available tasks for this project:
 * release:          Create a release
 * snapshot:         Create a snapshot release
 ```
+
+## Installation
+
+### From releases
+
+Download the latest release from the [release page](https://github.com/sgaunet/gitlab-token-expiration/releases) and install it in your PATH.
+
+### Homebrew
+
+```bash
+brew tap sgaunet/homebrew-tools
+brew install sgaunet/tools/gitlab-token-expiration
+```
