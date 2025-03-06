@@ -8,20 +8,14 @@ import (
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
+	"github.com/sgaunet/gitlab-token-expiration/pkg/logger"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 )
 
 type App struct {
 	gitlabService *gitlab.GitlabService
-	log           Logger
+	log           logger.Logger
 	view          views.Renderer
-}
-
-type Logger interface {
-	Debug(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-	Info(msg string, args ...any)
 }
 
 // NewApp returns a new App struct
@@ -31,14 +25,12 @@ func NewApp(v views.Renderer) *App {
 		view:          v,
 		log:           slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
-	gitlab.SetLogger(app.log)
 	return app
 }
 
 // SetLogger sets the logger
-func (a *App) SetLogger(l Logger) {
+func (a *App) SetLogger(l logger.Logger) {
 	a.log = l
-	gitlab.SetLogger(l)
 }
 
 // SetGitlabEndpoint sets the gitlab endpoint
