@@ -37,90 +37,12 @@ changelog:
       - '^docs:'
       - '^test:'
 
-# dockers:
-#   # https://goreleaser.com/customization/docker/
-#   - use: buildx
-#     goos: linux
-#     goarch: amd64
-#     image_templates:
-#       - "sgaunet/{{ .ProjectName }}:{{ .Version }}-amd64"
-#       - "sgaunet/{{ .ProjectName }}:latest-amd64"
-#     build_flag_templates:
-#       - "--platform=linux/amd64"
-#       - "--label=org.opencontainers.image.created={{.Date}}"
-#       - "--label=org.opencontainers.image.title={{.ProjectName}}"
-#       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-#       - "--label=org.opencontainers.image.version={{.Version}}"
-#     extra_files:
-#     - resources
-
-#   - use: buildx
-#     goos: linux
-#     goarch: arm64
-#     image_templates:
-#       - "sgaunet/{{ .ProjectName }}:{{ .Version }}-arm64v8"
-#       - "sgaunet/{{ .ProjectName }}:latest-arm64v8"
-#     build_flag_templates:
-#       - "--platform=linux/arm64/v8"
-#       - "--label=org.opencontainers.image.created={{.Date}}"
-#       - "--label=org.opencontainers.image.title={{.ProjectName}}"
-#       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-#       - "--label=org.opencontainers.image.version={{.Version}}"
-#     extra_files:
-#     - resources
-
-#   - use: buildx
-#     goos: linux
-#     goarch: arm
-#     goarm: "6"
-#     image_templates:
-#       - "sgaunet/{{ .ProjectName }}:{{ .Version }}-armv6"
-#       - "sgaunet/{{ .ProjectName }}:latest-armv6"
-#     build_flag_templates:
-#       - "--platform=linux/arm/v6"
-#       - "--label=org.opencontainers.image.created={{.Date}}"
-#       - "--label=org.opencontainers.image.title={{.ProjectName}}"
-#       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-#       - "--label=org.opencontainers.image.version={{.Version}}"
-#     extra_files:
-#     - resources
-
-#   - use: buildx
-#     goos: linux
-#     goarch: arm
-#     goarm: "7"
-#     image_templates:
-#       - "sgaunet/{{ .ProjectName }}:{{ .Version }}-armv7"
-#       - "sgaunet/{{ .ProjectName }}:latest-armv7"
-#     build_flag_templates:
-#       - "--platform=linux/arm/v7"
-#       - "--label=org.opencontainers.image.created={{.Date}}"
-#       - "--label=org.opencontainers.image.title={{.ProjectName}}"
-#       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-#       - "--label=org.opencontainers.image.version={{.Version}}"
-#     extra_files:
-#     - resources
-
-# docker_manifests:
-#   # https://goreleaser.com/customization/docker_manifest/
-#   - name_template: sgaunet/{{ .ProjectName }}:{{ .Version }}
-#     image_templates:
-#       - sgaunet/{{ .ProjectName }}:{{ .Version }}-amd64
-#       - sgaunet/{{ .ProjectName }}:{{ .Version }}-arm64v8
-#       - sgaunet/{{ .ProjectName }}:{{ .Version }}-armv6
-#       - sgaunet/{{ .ProjectName }}:{{ .Version }}-armv7
-#   - name_template: sgaunet/{{ .ProjectName }}:latest
-#     image_templates:
-#       - sgaunet/{{ .ProjectName }}:latest-amd64
-#       - sgaunet/{{ .ProjectName }}:latest-arm64v8
-#       - sgaunet/{{ .ProjectName }}:latest-armv6
-#       - sgaunet/{{ .ProjectName }}:latest-armv7
-
 brews:
   - homepage: 'https://github.com/sgaunet/homebrew-tools'
+    directory: Formula
     commit_author:
       name: sgaunet
-      email: sgaunet@gmail.com
+      email: 1552102+sgaunet@users.noreply.github.com
     repository:
       owner: sgaunet
       name: homebrew-tools
