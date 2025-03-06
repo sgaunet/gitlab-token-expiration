@@ -2,6 +2,7 @@
 [![GitHub release](https://img.shields.io/github/release/sgaunet/gitlab-token-expiration.svg)](https://github.com/sgaunet/gitlab-token-expiration/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sgaunet/gitlab-token-expiration)](https://goreportcard.com/report/github.com/sgaunet/gitlab-token-expiration)
 ![GitHub Downloads](https://img.shields.io/github/downloads/sgaunet/gitlab-token-expiration/total)
+![Test Coverage](https://raw.githubusercontent.com/wiki/sgaunet/gitlab-token-expiration/coverage-badge.svg)
 [![GoDoc](https://godoc.org/github.com/sgaunet/gitlab-token-expiration?status.svg)](https://godoc.org/github.com/sgaunet/gitlab-token-expiration)
 [![License](https://img.shields.io/github/license/sgaunet/gitlab-token-expiration.svg)](LICENSE)
 
