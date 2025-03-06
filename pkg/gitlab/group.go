@@ -60,7 +60,6 @@ func (s *GitlabService) GetProjectsOfGroup(groupID int) (res []GitlabProject, er
 		}
 		for _, project := range projects {
 			if !project.Archived {
-				log.Info("GetEveryProjectsOfGroup", "projectName", project.Name)
 				res = append(res, project)
 			}
 		}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -12,25 +11,12 @@ import (
 
 const GitlabApiEndpoint = "https://gitlab.com/api/v4"
 
-var log Logger
-
-type Logger interface {
-	Debug(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-	Info(msg string, args ...any)
-}
-
 type GitlabService struct {
 	gitlabApiEndpoint string
 	token             string
 	httpClient        *http.Client
 	// rateLimitProjectAPI *rate.Limiter TODO: implement rate limiting
 	// rateLimitGroupAPI   *rate.Limiter TODO: implement rate limiting
-}
-
-func init() {
-	log = slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
 // getNextLink parses the link header and returns the next page url
@@ -71,13 +57,6 @@ func NewGitlabService() *GitlabService {
 	return gs
 }
 
-// SetLogger sets the logger
-func SetLogger(l Logger) {
-	if l != nil {
-		log = l
-	}
-}
-
 // SetGitlabEndpoint sets the Gitlab API endpoint
 // default: https://gitlab.com/v4/api/
 func (r *GitlabService) SetGitlabEndpoint(gitlabApiEndpoint string) {
@@ -87,9 +66,6 @@ func (r *GitlabService) SetGitlabEndpoint(gitlabApiEndpoint string) {
 // SetToken sets the Gitlab API token
 // default: GITLAB_TOKEN env variable
 func (r *GitlabService) SetToken(token string) {
-	if token == "" {
-		log.Warn("no token provided")
-	}
 	r.token = token
 }
 
