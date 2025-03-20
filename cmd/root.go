@@ -29,12 +29,12 @@ func Execute() {
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	groupCmd.Flags().IntVar(&gitlabID, "id", 0, "Gitlab Group ID")
-	groupCmd.Flags().BoolVar(&noRecursiveOption, "no-recursive", false, "Do not list tokens of subgroups and projects")
+	groupCmd.Flags().IntVarP(&gitlabID, "id", "i", 0, "Gitlab Group ID")
+	groupCmd.Flags().BoolVarP(&noRecursiveOption, "no-recursive", "n", false, "Do not list tokens of subgroups and projects")
 	groupCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	rootCmd.AddCommand(groupCmd)
 
-	projectCmd.Flags().IntVar(&gitlabID, "id", 0, "Gitlab Project ID")
+	projectCmd.Flags().IntVarP(&gitlabID, "id", "i", 0, "Gitlab Project ID")
 	projectCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 
 	rootCmd.AddCommand(projectCmd)
