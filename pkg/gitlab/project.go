@@ -3,6 +3,7 @@ package gitlab
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 )
 
 // GitlabProject represents a Gitlab project
@@ -44,11 +45,15 @@ func (s *GitlabService) GetProjectAccessTokens(projectID int) ([]ProjectAccessTo
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	var res []ProjectAccessToken
-	err = json.NewDecoder(resp.Body).Decode(&res)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	var res []ProjectAccessToken
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return nil, UnmarshalErrorMessage(body)
 	}
 	return res, nil
 }

@@ -97,12 +97,10 @@ func (s *GitlabService) retrieveProjects(url string) (res []GitlabProject, err e
 		return res, err
 	}
 	var jsonResponse []GitlabProject
-	if err := json.Unmarshal(body, &jsonResponse); err != nil {
-		var errMsg ErrorMessage
-		if err := json.Unmarshal(body, &errMsg); err != nil {
-			return res, fmt.Errorf("error unmarshalling json: %s", err.Error())
-		}
-		return res, fmt.Errorf("error retrieving projects: %s", errMsg.Message)
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &jsonResponse); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 
 	// check if response header contains a link to the next page
@@ -138,12 +136,10 @@ func (s *GitlabService) retrieveSubgroups(url string) (res []GitlabGroup, err er
 		return res, err
 	}
 	var jsonResponse []GitlabGroup
-	if err := json.Unmarshal(body, &jsonResponse); err != nil {
-		var errMsg ErrorMessage
-		if err := json.Unmarshal(body, &errMsg); err != nil {
-			return res, fmt.Errorf("error unmarshalling json: %s", err.Error())
-		}
-		return res, fmt.Errorf("error retrieving subgroups: %s", errMsg.Message)
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &jsonResponse); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 
 	// check if response header contains a link to the next page

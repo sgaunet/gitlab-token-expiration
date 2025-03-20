@@ -31,6 +31,11 @@ func (s *GitlabService) GetPersonalAccessTokens() (res []PersonalAccessToken, er
 	if err != nil {
 		return res, err
 	}
-	err = json.Unmarshal(body, &res)
+
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &res); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
+	}
 	return res, err
 }

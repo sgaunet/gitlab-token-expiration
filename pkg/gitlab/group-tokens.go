@@ -3,6 +3,7 @@ package gitlab
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 )
 
 // GroupAccessToken is a struct that contains the information about a Gitlab group access token
@@ -27,11 +28,16 @@ func (s *GitlabService) GetGroupAccessTokens(groupID int) ([]GroupAccessToken, e
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	var res []GroupAccessToken
-	err = json.NewDecoder(resp.Body).Decode(&res)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	var res []GroupAccessToken
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &res); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 	return res, nil
 }
@@ -55,11 +61,16 @@ func (s *GitlabService) GetGroupDeployTokens(groupID int) ([]GroupDeployToken, e
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	var res []GroupDeployToken
-	err = json.NewDecoder(resp.Body).Decode(&res)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	var res []GroupDeployToken
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &res); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 	return res, nil
 }
