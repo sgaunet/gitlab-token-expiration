@@ -22,8 +22,11 @@ var groupCmd = &cobra.Command{
 	Long:  `List expirable tokens of a group`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var tokens []dto.Token
-		v := views.NewTableOutput(true, false)
-		a := app.NewApp(v)
+		v := views.NewTableOutput(views.WithColorOption(printColor),
+			views.WithHeaderOption(printHeader),
+			views.WithPrintRevokedOption(printRevoked),
+		)
+		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
 
 		// l := initTrace(os.Getenv("DEBUGLEVEL"))
 		// a.SetLogger(l)
