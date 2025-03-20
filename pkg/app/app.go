@@ -14,16 +14,37 @@ import (
 
 type App struct {
 	gitlabService *gitlab.GitlabService
+	printRevoked  bool
 	log           logger.Logger
 	view          views.Renderer
 }
 
+// option pattern to set the gitlab endpoint
+type Option func(*App)
+
+// WithGitlabEndpoint sets the gitlab endpoint
+func WithGitlabEndpoint(gitlabApiEndpoint string) Option {
+	return func(a *App) {
+		a.gitlabService.SetGitlabEndpoint(gitlabApiEndpoint)
+	}
+}
+
+// WithRevokedToken sets the printRevoked flag
+func WithRevokedToken(printRevoked bool) Option {
+	return func(a *App) {
+		a.printRevoked = printRevoked
+	}
+}
+
 // NewApp returns a new App struct
-func NewApp(v views.Renderer) *App {
+func NewApp(v views.Renderer, opts ...Option) *App {
 	app := &App{
 		gitlabService: gitlab.NewGitlabService(),
 		view:          v,
 		log:           slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	for _, opt := range opts {
+		opt(app)
 	}
 	return app
 }

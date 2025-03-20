@@ -7,6 +7,9 @@ import (
 )
 
 var gitlabID int // Gitlab project or group ID
+var printRevoked bool
+var printHeader bool = true
+var printColor bool = true
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -28,10 +31,14 @@ func init() {
 
 	groupCmd.Flags().IntVar(&gitlabID, "id", 0, "Gitlab Group ID")
 	groupCmd.Flags().BoolVar(&noRecursiveOption, "no-recursive", false, "Do not list tokens of subgroups and projects")
+	groupCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	rootCmd.AddCommand(groupCmd)
 
 	projectCmd.Flags().IntVar(&gitlabID, "id", 0, "Gitlab Project ID")
+	projectCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
+
 	rootCmd.AddCommand(projectCmd)
 
+	patCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	rootCmd.AddCommand(patCmd)
 }

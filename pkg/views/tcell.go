@@ -13,13 +13,35 @@ import (
 type TableOutput struct {
 	HeaderOption bool
 	ColorOption  bool
+	printRevoked bool
 }
 
-func NewTableOutput(headerOption, colorOption bool) TableOutput {
-	return TableOutput{
-		HeaderOption: headerOption,
-		ColorOption:  colorOption,
+type TableOutputOption func(*TableOutput)
+
+func WithHeaderOption(headerOption bool) TableOutputOption {
+	return func(t *TableOutput) {
+		t.HeaderOption = headerOption
 	}
+}
+
+func WithColorOption(colorOption bool) TableOutputOption {
+	return func(t *TableOutput) {
+		t.ColorOption = colorOption
+	}
+}
+
+func WithPrintRevokedOption(printRevoked bool) TableOutputOption {
+	return func(t *TableOutput) {
+		t.printRevoked = printRevoked
+	}
+}
+
+func NewTableOutput(opts ...TableOutputOption) TableOutput {
+	t := TableOutput{}
+	for _, opt := range opts {
+		opt(&t)
+	}
+	return t
 }
 
 func (t TableOutput) Render(tokens []dto.Token) error {
@@ -27,6 +49,9 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 		{"ID", "Source", "Type", "Name", "Revoked", "Expires at"},
 	}
 	for _, token := range tokens {
+		if !t.printRevoked && token.Revoked {
+			continue
+		}
 		tData = append(tData, []string{fmt.Sprintf("%d", token.ID),
 			token.Source, token.Type, token.Name,
 			prettyPrintBool(token.Revoked, true),
