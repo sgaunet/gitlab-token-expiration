@@ -110,8 +110,10 @@ func (s *GitlabService) GetGroup(groupID int) (res GitlabGroup, err error) {
 	if err != nil {
 		return res, err
 	}
-	if err := json.Unmarshal(body, &res); err != nil {
-		return res, err
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &res); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 	return res, err
 }
@@ -128,12 +130,10 @@ func (s *GitlabService) GetProject(projectID int) (res GitlabProject, err error)
 	if err != nil {
 		return res, err
 	}
-	if err := json.Unmarshal(body, &res); err != nil {
-		var errMsg ErrorMessage
-		if err := json.Unmarshal(body, &errMsg); err != nil {
-			return res, fmt.Errorf("error unmarshalling json: %s", err.Error())
-		}
-		return res, fmt.Errorf("error retrieving project: %s", errMsg.Message)
+	// Unmarshal the response
+	if err = json.Unmarshal(body, &res); err != nil {
+		// If the response is an error message, unmarshal it
+		return res, UnmarshalErrorMessage(body)
 	}
 	return res, err
 }
