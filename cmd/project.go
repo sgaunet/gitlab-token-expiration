@@ -20,6 +20,7 @@ var projectCmd = &cobra.Command{
 		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
 			views.WithHeaderOption(!printNoHeader),
 			views.WithPrintRevokedOption(printRevoked),
+			views.WithNbDaysBeforeExp(nbDaysBeforeExp),
 		)
 		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
 

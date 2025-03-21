@@ -6,7 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var gitlabID int // Gitlab project or group ID
+const DefaultNbDaysBeforeExp = 60
+
+var gitlabID int         // Gitlab project or group ID
+var nbDaysBeforeExp uint // Number of days before expiration date to display it in yellow
 var printRevoked bool
 var printNoHeader bool
 var printNoColor bool
@@ -34,17 +37,19 @@ func init() {
 	groupCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	groupCmd.Flags().BoolVarP(&printNoHeader, "no-header", "H", false, "Do not print header")
 	groupCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")
+	groupCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp, "Number of days before expiration date to display it in yellow")
 	rootCmd.AddCommand(groupCmd)
 
 	projectCmd.Flags().IntVarP(&gitlabID, "id", "i", 0, "Gitlab Project ID")
 	projectCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	projectCmd.Flags().BoolVarP(&printNoHeader, "no-header", "H", false, "Do not print header")
 	projectCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")
-
+	projectCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp, "Number of days before expiration date to display it in yellow")
 	rootCmd.AddCommand(projectCmd)
 
 	patCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	patCmd.Flags().BoolVarP(&printNoHeader, "no-header", "H", false, "Do not print header")
 	patCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")
+	patCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp, "Number of days before expiration date to display it in yellow")
 	rootCmd.AddCommand(patCmd)
 }

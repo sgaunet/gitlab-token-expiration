@@ -11,9 +11,10 @@ import (
 )
 
 type TableOutput struct {
-	HeaderOption bool
-	ColorOption  bool
-	printRevoked bool
+	HeaderOption    bool
+	ColorOption     bool
+	printRevoked    bool
+	nbDaysBeforeExp uint
 }
 
 type TableOutputOption func(*TableOutput)
@@ -33,6 +34,12 @@ func WithColorOption(colorOption bool) TableOutputOption {
 func WithPrintRevokedOption(printRevoked bool) TableOutputOption {
 	return func(t *TableOutput) {
 		t.printRevoked = printRevoked
+	}
+}
+
+func WithNbDaysBeforeExp(nbDaysBeforeExp uint) TableOutputOption {
+	return func(t *TableOutput) {
+		t.nbDaysBeforeExp = nbDaysBeforeExp
 	}
 }
 
@@ -112,7 +119,7 @@ func (t TableOutput) prettyPrintExpiresAt(d string) string {
 	if now.After(date) {
 		return red(d)
 	}
-	if now.AddDate(0, 0, 30).After(date) {
+	if now.AddDate(0, 0, int(t.nbDaysBeforeExp)).After(date) {
 		return yellow(d)
 	}
 	return d
