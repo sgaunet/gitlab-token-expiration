@@ -16,8 +16,8 @@ var patCmd = &cobra.Command{
 	Short: "List gitlab personal access tokens",
 	Long:  `List personal access tokens from gitlab`,
 	Run: func(cmd *cobra.Command, args []string) {
-		v := views.NewTableOutput(views.WithColorOption(printColor),
-			views.WithHeaderOption(printHeader),
+		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
+			views.WithHeaderOption(!printNoHeader),
 			views.WithPrintRevokedOption(printRevoked),
 		)
 		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
