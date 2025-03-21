@@ -45,8 +45,9 @@ func NewTableOutput(opts ...TableOutputOption) TableOutput {
 }
 
 func (t TableOutput) Render(tokens []dto.Token) error {
-	tData := pterm.TableData{
-		{"ID", "Source", "Type", "Name", "Revoked", "Expires at"},
+	tData := pterm.TableData{}
+	if t.HeaderOption {
+		tData = append(tData, []string{"ID", "Source", "Type", "Name", "Revoked", "Expires at"})
 	}
 	for _, token := range tokens {
 		if !t.printRevoked && token.Revoked {
@@ -54,11 +55,15 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 		}
 		tData = append(tData, []string{fmt.Sprintf("%d", token.ID),
 			token.Source, token.Type, token.Name,
-			prettyPrintBool(token.Revoked, true),
-			prettyPrintExpiresAt(token.ExpiresAt)})
+			t.prettyPrintBool(token.Revoked, true),
+			t.prettyPrintExpiresAt(token.ExpiresAt)})
 	}
 	// Create a table with a header and the defined data, then render it
-	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
+	table := pterm.DefaultTable
+	if t.HeaderOption {
+		table = *table.WithHasHeader()
+	}
+	err := table.WithData(tData).Render()
 	if err != nil {
 		return fmt.Errorf("error rendering table: %w", err)
 	}
@@ -78,16 +83,16 @@ func prettyPrintGitlabTime(t string) string {
 
 // prettyPrintBool returns a string representation of a boolean value
 // with red color if value is equal to coloredValue
-func prettyPrintBool(b bool, coloredValue bool) string {
+func (t TableOutput) prettyPrintBool(b bool, coloredValue bool) string {
 	red := color.New(color.FgRed).SprintFunc()
 	bStr := strconv.FormatBool(b)
-	if b == coloredValue {
+	if b == coloredValue && t.ColorOption {
 		return red(bStr)
 	}
 	return bStr
 }
 
-func prettyPrintExpiresAt(d string) string {
+func (t TableOutput) prettyPrintExpiresAt(d string) string {
 	red := color.New(color.FgRed).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 	// convert YYYY-MM-DD to time.Time
@@ -99,6 +104,10 @@ func prettyPrintExpiresAt(d string) string {
 	if err != nil {
 		return d
 	}
+	// if no color option, return the date
+	if !t.ColorOption {
+		return d
+	}
 	now := time.Now()
 	if now.After(date) {
 		return red(d)
@@ -108,55 +117,3 @@ func prettyPrintExpiresAt(d string) string {
 	}
 	return d
 }
-
-// func (t TableOutput) PrintGitlabProjectAccessToken(tokens []gitlab.ProjectAccessToken) error {
-// 	tData := pterm.TableData{
-// 		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
-// 	}
-// 	for _, token := range tokens {
-// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
-// 			prettyPrintBool(token.Revoked, true),
-// 			fmt.Sprintf("%d", token.UserId),
-// 			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
-// 	}
-// 	// Create a table with a header and the defined data, then render it
-// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-// 	if err != nil {
-// 		return fmt.Errorf("error rendering table: %w", err)
-// 	}
-// 	return nil
-// }
-
-// func (t TableOutput) PrintGitlabGroupAccessToken(tokens []gitlab.GroupAccessToken) error {
-// 	tData := pterm.TableData{
-// 		{"ID", "Name", "Revoked", "User ID", "Last used at", "Active", "Expires at"},
-// 	}
-// 	for _, token := range tokens {
-// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name,
-// 			prettyPrintBool(token.Revoked, true),
-// 			fmt.Sprintf("%d", token.UserId),
-// 			prettyPrintGitlabTime(token.LastUsedAt), prettyPrintBool(token.Active, false), prettyPrintExpiresAt(token.ExpiresAt)})
-// 	}
-// 	// Create a table with a header and the defined data, then render it
-// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-// 	if err != nil {
-// 		return fmt.Errorf("error rendering table: %w", err)
-// 	}
-// 	return nil
-// }
-
-// func (t TableOutput) PrintGitlabGroupDeployToken(tokens []gitlab.GroupDeployToken) error {
-// 	tData := pterm.TableData{
-// 		{"ID", "Name", "Username", "Expires at", "Revoked", "Expired"},
-// 	}
-// 	for _, token := range tokens {
-// 		tData = append(tData, []string{fmt.Sprintf("%d", token.Id), token.Name, token.Username,
-// 			prettyPrintExpiresAt(token.ExpiresAt), prettyPrintBool(token.Revoked, true), prettyPrintBool(token.Expired, true)})
-// 	}
-// 	// Create a table with a header and the defined data, then render it
-// 	err := pterm.DefaultTable.WithHasHeader().WithData(tData).Render()
-// 	if err != nil {
-// 		return fmt.Errorf("error rendering table: %w", err)
-// 	}
-// 	return nil
-// }
