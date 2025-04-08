@@ -1,12 +1,11 @@
 module github.com/sgaunet/gitlab-token-expiration
 
 go 1.23.2
-
 require (
 	github.com/fatih/color v1.18.0
 	github.com/pterm/pterm v0.12.80
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
