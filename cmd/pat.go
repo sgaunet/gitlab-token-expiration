@@ -32,7 +32,10 @@ var patCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		v.Render(tokens)
+		if err := v.Render(tokens); err != nil {
+			fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 

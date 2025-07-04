@@ -88,15 +88,6 @@ func (r *GitlabService) get(url string) (*http.Response, error) {
 	return r.httpClient.Do(req)
 }
 
-// Post sends a POST request to the Gitlab API to the given path
-func (r *GitlabService) post(url string) (*http.Response, error) {
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("PRIVATE-TOKEN", r.token)
-	return r.httpClient.Do(req)
-}
 
 // GetGroup returns the gitlab group from the given ID
 func (s *GitlabService) GetGroup(groupID int) (res GitlabGroup, err error) {
@@ -105,7 +96,12 @@ func (s *GitlabService) GetGroup(groupID int) (res GitlabGroup, err error) {
 	if err != nil {
 		return res, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log error but don't fail the operation
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return res, err
@@ -125,7 +121,12 @@ func (s *GitlabService) GetProject(projectID int) (res GitlabProject, err error)
 	if err != nil {
 		return res, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log error but don't fail the operation
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return res, err

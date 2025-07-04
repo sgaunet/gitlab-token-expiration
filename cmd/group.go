@@ -50,7 +50,10 @@ var groupCmd = &cobra.Command{
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
 			}
-			v.Render(tokens)
+			if err := v.Render(tokens); err != nil {
+				fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
+				os.Exit(1)
+			}
 		}
 
 		if !noRecursiveOption {
@@ -98,7 +101,10 @@ var groupCmd = &cobra.Command{
 			tokens = append(tokens, tokensOfProjects...)
 			spinnerInfo.Success("Tokens retrieved")
 
-			v.Render(tokens)
+			if err := v.Render(tokens); err != nil {
+				fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
+				os.Exit(1)
+			}
 		}
 	},
 }
