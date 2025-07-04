@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 )
 
 // GitlabGroup represents a Gitlab group
@@ -91,7 +92,12 @@ func (s *GitlabService) retrieveProjects(url string) (res []GitlabProject, err e
 	if err != nil {
 		return res, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log error but don't fail the operation
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return res, err
@@ -130,7 +136,12 @@ func (s *GitlabService) retrieveSubgroups(url string) (res []GitlabGroup, err er
 	if err != nil {
 		return res, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log error but don't fail the operation
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+		}
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return res, err

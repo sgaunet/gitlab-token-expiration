@@ -77,16 +77,6 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 	return nil
 }
 
-func prettyPrintGitlabTime(t string) string {
-	if t == "" {
-		return ""
-	}
-	if len(t) < 19 {
-		return t
-	}
-	// 2021-09-29T14:00:00Z to 2021-09-29 14:00:00
-	return fmt.Sprintf("%s %s", t[:10], t[11:19])
-}
 
 // prettyPrintBool returns a string representation of a boolean value
 // with red color if value is equal to coloredValue
