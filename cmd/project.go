@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/spf13/cobra"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 // projectCmd represents the project command to list expirable tokens of a project
@@ -38,7 +38,7 @@ var projectCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		tokens, err := a.GetTokensOfProjects(ctx, []gitlab.GitlabProject{project})
+		tokens, err := a.GetTokensOfProjects(ctx, []*gitlab.Project{project})
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
