@@ -8,9 +8,9 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/spf13/cobra"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
 var noRecursiveOption bool
@@ -45,7 +45,7 @@ var groupCmd = &cobra.Command{
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
 			}
-			tokens, err = a.GetTokensOfGroups(ctx, []gitlab.GitlabGroup{group})
+			tokens, err = a.GetTokensOfGroups(ctx, []*gitlab.Group{group})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)

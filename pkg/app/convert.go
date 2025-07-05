@@ -2,65 +2,104 @@ package app
 
 import (
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/gitlab"
+	"gitlab.com/gitlab-org/api/client-go"
 )
 
-func ConvertGroupAccessTokenToDTOToken(groupAccessToken gitlab.GroupAccessToken) dto.Token {
+func ConvertGroupAccessTokenToDTOToken(groupAccessToken *gitlab.GroupAccessToken) dto.Token {
+	// Convert time format
+	var expiresAt string
+	if groupAccessToken.ExpiresAt != nil {
+		expiresAt = groupAccessToken.ExpiresAt.String()
+		if len(expiresAt) >= 10 {
+			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		}
+	}
+
 	return dto.Token{
-		ID:        groupAccessToken.Id,
+		ID:        groupAccessToken.ID,
 		Name:      groupAccessToken.Name,
-		ExpiresAt: groupAccessToken.ExpiresAt,
+		ExpiresAt: expiresAt,
 		Revoked:   groupAccessToken.Revoked,
 		Source:    "group",
 		Type:      "access_token",
 	}
 }
 
-func ConvertGroupDeployTokenToDTOToken(groupDeployToken gitlab.GroupDeployToken) dto.Token {
+func ConvertGroupDeployTokenToDTOToken(groupDeployToken *gitlab.DeployToken) dto.Token {
+	// Convert time format
+	var expiresAt string
+	if groupDeployToken.ExpiresAt != nil {
+		expiresAt = groupDeployToken.ExpiresAt.Format("2006-01-02")
+	}
+
 	return dto.Token{
-		ID:        groupDeployToken.Id,
+		ID:        groupDeployToken.ID,
 		Name:      groupDeployToken.Name,
-		ExpiresAt: groupDeployToken.ExpiresAt,
+		ExpiresAt: expiresAt,
 		Revoked:   groupDeployToken.Revoked,
 		Source:    "group",
 		Type:      "deploy_token",
 	}
 }
 
-func ConvertProjectAccessTokenToDTOToken(projectAccessToken gitlab.ProjectAccessToken) dto.Token {
+func ConvertProjectAccessTokenToDTOToken(projectAccessToken *gitlab.ProjectAccessToken) dto.Token {
+	// Convert time format
+	var expiresAt string
+	if projectAccessToken.ExpiresAt != nil {
+		expiresAt = projectAccessToken.ExpiresAt.String()
+		if len(expiresAt) >= 10 {
+			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		}
+	}
+
 	return dto.Token{
-		ID:        projectAccessToken.Id,
+		ID:        projectAccessToken.ID,
 		Name:      projectAccessToken.Name,
-		ExpiresAt: projectAccessToken.ExpiresAt,
+		ExpiresAt: expiresAt,
 		Revoked:   projectAccessToken.Revoked,
 		Source:    "project",
 		Type:      "access_token",
 	}
 }
 
-func ConvertProjectDeployTokenToDTOToken(projectDeployToken gitlab.PersonalAccessToken) dto.Token {
+func ConvertProjectDeployTokenToDTOToken(projectDeployToken *gitlab.DeployToken) dto.Token {
+	// Convert time format
+	var expiresAt string
+	if projectDeployToken.ExpiresAt != nil {
+		expiresAt = projectDeployToken.ExpiresAt.Format("2006-01-02")
+	}
+
 	return dto.Token{
-		ID:        projectDeployToken.Id,
+		ID:        projectDeployToken.ID,
 		Name:      projectDeployToken.Name,
-		ExpiresAt: projectDeployToken.ExpiresAt,
+		ExpiresAt: expiresAt,
 		Revoked:   projectDeployToken.Revoked,
 		Source:    "project",
 		Type:      "deploy_token",
 	}
 }
 
-func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken gitlab.PersonalAccessToken) dto.Token {
+func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken *gitlab.PersonalAccessToken) dto.Token {
+	// Convert time format
+	var expiresAt string
+	if personalGitlabToken.ExpiresAt != nil {
+		expiresAt = personalGitlabToken.ExpiresAt.String()
+		if len(expiresAt) >= 10 {
+			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		}
+	}
+
 	return dto.Token{
-		ID:        personalGitlabToken.Id,
+		ID:        personalGitlabToken.ID,
 		Name:      personalGitlabToken.Name,
-		ExpiresAt: personalGitlabToken.ExpiresAt,
+		ExpiresAt: expiresAt,
 		Revoked:   personalGitlabToken.Revoked,
 		Source:    "",
 		Type:      "personal_access_token",
 	}
 }
 
-func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []gitlab.GroupAccessToken) []dto.Token {
+func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []*gitlab.GroupAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, groupAccessToken := range groupAccessTokens {
 		tokens = append(tokens, ConvertGroupAccessTokenToDTOToken(groupAccessToken))
@@ -68,7 +107,7 @@ func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []gitlab.GroupAccessTo
 	return tokens
 }
 
-func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []gitlab.GroupDeployToken) []dto.Token {
+func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []*gitlab.DeployToken) []dto.Token {
 	var tokens []dto.Token
 	for _, groupDeployToken := range groupDeployTokens {
 		tokens = append(tokens, ConvertGroupDeployTokenToDTOToken(groupDeployToken))
@@ -76,7 +115,7 @@ func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []gitlab.GroupDeployTo
 	return tokens
 }
 
-func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []gitlab.ProjectAccessToken) []dto.Token {
+func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []*gitlab.ProjectAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, projectAccessToken := range projectAccessTokens {
 		tokens = append(tokens, ConvertProjectAccessTokenToDTOToken(projectAccessToken))
@@ -84,7 +123,7 @@ func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []gitlab.ProjectAc
 	return tokens
 }
 
-func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []gitlab.PersonalAccessToken) []dto.Token {
+func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []*gitlab.DeployToken) []dto.Token {
 	var tokens []dto.Token
 	for _, projectDeployToken := range projectDeployTokens {
 		tokens = append(tokens, ConvertProjectDeployTokenToDTOToken(projectDeployToken))
@@ -92,7 +131,7 @@ func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []gitlab.PersonalA
 	return tokens
 }
 
-func convertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []gitlab.PersonalAccessToken) []dto.Token {
+func convertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []*gitlab.PersonalAccessToken) []dto.Token {
 	var tokens []dto.Token
 	for _, personalGitlabToken := range personalGitlabTokens {
 		tokens = append(tokens, ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken))
