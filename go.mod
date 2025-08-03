@@ -7,7 +7,7 @@ require (
 	github.com/pterm/pterm v0.12.81
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	gitlab.com/gitlab-org/api/client-go v0.133.0
+	gitlab.com/gitlab-org/api/client-go v0.137.0
 )
 
 require (
