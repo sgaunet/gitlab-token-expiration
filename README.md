@@ -4,6 +4,9 @@
 ![GitHub Downloads](https://img.shields.io/github/downloads/sgaunet/gitlab-token-expiration/total)
 ![Test Coverage](https://raw.githubusercontent.com/wiki/sgaunet/gitlab-token-expiration/coverage-badge.svg)
 [![GoDoc](https://godoc.org/github.com/sgaunet/gitlab-token-expiration?status.svg)](https://godoc.org/github.com/sgaunet/gitlab-token-expiration)
+[![Linter](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/linter.yml/badge.svg)](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/linter.yml)
+[![Release](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/release.yml/badge.svg)](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/release.yml)
+[![Snapshot](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/snapshot.yml/badge.svg)](https://github.com/sgaunet/gitlab-token-expiration/actions/workflows/snapshot.yml)
 [![License](https://img.shields.io/github/license/sgaunet/gitlab-token-expiration.svg)](LICENSE)
 
 # gitlab-token-expiration
