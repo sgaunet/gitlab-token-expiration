@@ -1,7 +1,9 @@
+// Package app contains the application logic for the GitLab token expiration tool.
 package app
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,6 +15,7 @@ import (
 	"gitlab.com/gitlab-org/api/client-go"
 )
 
+// App represents the application with GitLab client and configuration.
 type App struct {
 	gitlabClient  *gitlab.Client
 	printRevoked  bool
@@ -20,29 +23,29 @@ type App struct {
 	view          views.Renderer
 }
 
-// option pattern to set the gitlab endpoint
+// Option is a function that configures the App.
 type Option func(*App)
 
-// WithGitlabEndpoint sets the gitlab endpoint
-func WithGitlabEndpoint(gitlabApiEndpoint string) Option {
+// WithGitlabEndpoint sets the gitlab endpoint.
+func WithGitlabEndpoint(gitlabAPIEndpoint string) Option {
 	return func(a *App) {
 		// Create new client with custom base URL
 		token := os.Getenv("GITLAB_TOKEN")
-		client, err := gitlab.NewClient(token, gitlab.WithBaseURL(gitlabApiEndpoint))
+		client, err := gitlab.NewClient(token, gitlab.WithBaseURL(gitlabAPIEndpoint))
 		if err == nil {
 			a.gitlabClient = client
 		}
 	}
 }
 
-// WithRevokedToken sets the printRevoked flag
+// WithRevokedToken sets the printRevoked flag.
 func WithRevokedToken(printRevoked bool) Option {
 	return func(a *App) {
 		a.printRevoked = printRevoked
 	}
 }
 
-// NewApp returns a new App struct
+// NewApp returns a new App struct.
 func NewApp(v views.Renderer, opts ...Option) *App {
 	token := os.Getenv("GITLAB_TOKEN")
 	client, err := gitlab.NewClient(token)
@@ -62,22 +65,22 @@ func NewApp(v views.Renderer, opts ...Option) *App {
 	return app
 }
 
-// SetLogger sets the logger
+// SetLogger sets the logger.
 func (a *App) SetLogger(l logger.Logger) {
 	a.log = l
 }
 
-// SetGitlabEndpoint sets the gitlab endpoint
-func (a *App) SetGitlabEndpoint(gitlabApiEndpoint string) {
+// SetGitlabEndpoint sets the gitlab endpoint.
+func (a *App) SetGitlabEndpoint(gitlabAPIEndpoint string) {
 	// Create new client with custom base URL
 	token := os.Getenv("GITLAB_TOKEN")
-	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(gitlabApiEndpoint))
+	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(gitlabAPIEndpoint))
 	if err == nil {
 		a.gitlabClient = client
 	}
 }
 
-// SetToken sets the gitlab token
+// SetToken sets the gitlab token.
 func (a *App) SetToken(token string) {
 	// Create new client with the provided token
 	client, err := gitlab.NewClient(token)
@@ -86,8 +89,8 @@ func (a *App) SetToken(token string) {
 	}
 }
 
-// SetHttpClient sets the http client
-func (a *App) SetHttpClient(httpClient *http.Client) {
+// SetHTTPClient sets the http client.
+func (a *App) SetHTTPClient(httpClient *http.Client) {
 	// Create new client with custom HTTP client
 	token := os.Getenv("GITLAB_TOKEN")
 	client, err := gitlab.NewClient(token, gitlab.WithHTTPClient(httpClient))
@@ -96,14 +99,14 @@ func (a *App) SetHttpClient(httpClient *http.Client) {
 	}
 }
 
-// GetTokensOfProject returns the tokens of a project
-func (a *App) GetTokensOfProjects(ctx context.Context, projects []*gitlab.Project) ([]dto.Token, error) {
+// GetTokensOfProjects returns the tokens of multiple projects.
+func (a *App) GetTokensOfProjects(_ context.Context, projects []*gitlab.Project) ([]dto.Token, error) {
 	var tokens []dto.Token
 
 	for _, project := range projects {
 		projectAccessTokens, _, err := a.gitlabClient.ProjectAccessTokens.ListProjectAccessTokens(project.ID, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list project access tokens for project %d: %w", project.ID, err)
 		}
 		dtoTokens := ConvertProjectAccessTokenToDTOTokens(projectAccessTokens)
 
@@ -116,15 +119,15 @@ func (a *App) GetTokensOfProjects(ctx context.Context, projects []*gitlab.Projec
 	return tokens, nil
 }
 
-// GetTokensOfGroups returns the tokens of all groups
-func (a *App) GetTokensOfGroups(ctx context.Context, groups []*gitlab.Group) ([]dto.Token, error) {
+// GetTokensOfGroups returns the tokens of all groups.
+func (a *App) GetTokensOfGroups(_ context.Context, groups []*gitlab.Group) ([]dto.Token, error) {
 	var tokens []dto.Token
 
 	for _, group := range groups {
 		// Get access tokens of the group
 		groupAccessTokens, _, err := a.gitlabClient.GroupAccessTokens.ListGroupAccessTokens(group.ID, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list group access tokens for group %d: %w", group.ID, err)
 		}
 		dtoTokens := ConvertGroupAccessTokenToDTOTokens(groupAccessTokens)
 		// Add the source
@@ -136,7 +139,7 @@ func (a *App) GetTokensOfGroups(ctx context.Context, groups []*gitlab.Group) ([]
 		// Get deploy tokens of the group
 		groupDeployTokens, _, err := a.gitlabClient.DeployTokens.ListGroupDeployTokens(group.ID, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list group deploy tokens for group %d: %w", group.ID, err)
 		}
 		dtoTokens = ConvertGroupDeployTokenToDTOTokens(groupDeployTokens)
 		// Add the source
@@ -148,39 +151,39 @@ func (a *App) GetTokensOfGroups(ctx context.Context, groups []*gitlab.Group) ([]
 	return tokens, nil
 }
 
-// GetProject returns the project that matches the given ID
+// GetProject returns the project that matches the given ID.
 func (a *App) GetProject(projectID int) (*gitlab.Project, error) {
 	project, _, err := a.gitlabClient.Projects.GetProject(projectID, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get project %d: %w", projectID, err)
 	}
 	return project, nil
 }
 
-// GetGroup returns the group that matches the given ID
+// GetGroup returns the group that matches the given ID.
 func (a *App) GetGroup(groupID int) (*gitlab.Group, error) {
 	group, _, err := a.gitlabClient.Groups.GetGroup(groupID, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get group %d: %w", groupID, err)
 	}
 	return group, nil
 }
 
-// GetSubGroups returns the subgroups of the group that matches the given ID
+// GetSubGroups returns the subgroups of the group that matches the given ID.
 func (a *App) GetSubGroups(groupID int) ([]*gitlab.Group, error) {
 	groups, _, err := a.gitlabClient.Groups.ListSubGroups(groupID, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list subgroups for group %d: %w", groupID, err)
 	}
 	return groups, nil
 }
 
-// GetRecursiveProjectsOfGroup returns the projects of the group that matches the given ID
+// GetRecursiveProjectsOfGroup returns the projects of the group that matches the given ID.
 func (a *App) GetRecursiveProjectsOfGroup(groupID int) ([]*gitlab.Project, error) {
 	// Get projects of the group
 	projects, _, err := a.gitlabClient.Groups.ListGroupProjects(groupID, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list projects for group %d: %w", groupID, err)
 	}
 
 	// Get subgroups recursively
@@ -201,11 +204,11 @@ func (a *App) GetRecursiveProjectsOfGroup(groupID int) ([]*gitlab.Project, error
 	return projects, nil
 }
 
-// GetPersonalAccessTokens returns the personal access tokens
-func (a *App) GetPersonalAccessTokens(ctx context.Context) ([]dto.Token, error) {
+// GetPersonalAccessTokens returns the personal access tokens.
+func (a *App) GetPersonalAccessTokens(_ context.Context) ([]dto.Token, error) {
 	tokens, _, err := a.gitlabClient.PersonalAccessTokens.ListPersonalAccessTokens(nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list personal access tokens: %w", err)
 	}
 
 	res := convertPersonalGitlabTokenToDTOTokens(tokens)

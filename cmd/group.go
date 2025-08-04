@@ -1,3 +1,4 @@
+// Package cmd contains the command-line interface for the GitLab token expiration tool.
 package cmd
 
 import (
@@ -15,12 +16,12 @@ import (
 
 var noRecursiveOption bool
 
-// groupCmd represents the group command to list expirable tokens of a group
+// groupCmd represents the group command to list expirable tokens of a group.
 var groupCmd = &cobra.Command{
 	Use:   "group",
 	Short: "List expirable tokens of a group",
 	Long:  `List expirable tokens of a group`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		var tokens []dto.Token
 		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
 			views.WithHeaderOption(!printNoHeader),

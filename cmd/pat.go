@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// patCmd represents the command to list personal access tokens
+// patCmd represents the command to list personal access tokens.
 var patCmd = &cobra.Command{
 	Use:   "pat",
 	Short: "List gitlab personal access tokens",
 	Long:  `List personal access tokens from gitlab`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
 			views.WithHeaderOption(!printNoHeader),
 			views.WithPrintRevokedOption(printRevoked),

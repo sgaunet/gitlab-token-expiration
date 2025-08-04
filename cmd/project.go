@@ -11,12 +11,12 @@ import (
 	"gitlab.com/gitlab-org/api/client-go"
 )
 
-// projectCmd represents the project command to list expirable tokens of a project
+// projectCmd represents the project command to list expirable tokens of a project.
 var projectCmd = &cobra.Command{
 	Use:   "project",
 	Short: "List expirable tokens of a project",
 	Long:  `List expirable tokens of a project`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
 			views.WithHeaderOption(!printNoHeader),
 			views.WithPrintRevokedOption(printRevoked),
