@@ -5,13 +5,15 @@ import (
 	"gitlab.com/gitlab-org/api/client-go"
 )
 
+// ConvertGroupAccessTokenToDTOToken converts a GitLab group access token to a DTO token.
 func ConvertGroupAccessTokenToDTOToken(groupAccessToken *gitlab.GroupAccessToken) dto.Token {
 	// Convert time format
 	var expiresAt string
 	if groupAccessToken.ExpiresAt != nil {
 		expiresAt = groupAccessToken.ExpiresAt.String()
-		if len(expiresAt) >= 10 {
-			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		const dateFormatLength = 10
+		if len(expiresAt) >= dateFormatLength {
+			expiresAt = expiresAt[:dateFormatLength] // Extract YYYY-MM-DD part
 		}
 	}
 
@@ -25,6 +27,7 @@ func ConvertGroupAccessTokenToDTOToken(groupAccessToken *gitlab.GroupAccessToken
 	}
 }
 
+// ConvertGroupDeployTokenToDTOToken converts a GitLab group deploy token to a DTO token.
 func ConvertGroupDeployTokenToDTOToken(groupDeployToken *gitlab.DeployToken) dto.Token {
 	// Convert time format
 	var expiresAt string
@@ -42,13 +45,15 @@ func ConvertGroupDeployTokenToDTOToken(groupDeployToken *gitlab.DeployToken) dto
 	}
 }
 
+// ConvertProjectAccessTokenToDTOToken converts a GitLab project access token to a DTO token.
 func ConvertProjectAccessTokenToDTOToken(projectAccessToken *gitlab.ProjectAccessToken) dto.Token {
 	// Convert time format
 	var expiresAt string
 	if projectAccessToken.ExpiresAt != nil {
 		expiresAt = projectAccessToken.ExpiresAt.String()
-		if len(expiresAt) >= 10 {
-			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		const dateFormatLength = 10
+		if len(expiresAt) >= dateFormatLength {
+			expiresAt = expiresAt[:dateFormatLength] // Extract YYYY-MM-DD part
 		}
 	}
 
@@ -62,6 +67,7 @@ func ConvertProjectAccessTokenToDTOToken(projectAccessToken *gitlab.ProjectAcces
 	}
 }
 
+// ConvertProjectDeployTokenToDTOToken converts a GitLab project deploy token to a DTO token.
 func ConvertProjectDeployTokenToDTOToken(projectDeployToken *gitlab.DeployToken) dto.Token {
 	// Convert time format
 	var expiresAt string
@@ -79,13 +85,15 @@ func ConvertProjectDeployTokenToDTOToken(projectDeployToken *gitlab.DeployToken)
 	}
 }
 
+// ConvertPersonalGitlabTokenToDTOToken converts a GitLab personal access token to a DTO token.
 func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken *gitlab.PersonalAccessToken) dto.Token {
 	// Convert time format
 	var expiresAt string
 	if personalGitlabToken.ExpiresAt != nil {
 		expiresAt = personalGitlabToken.ExpiresAt.String()
-		if len(expiresAt) >= 10 {
-			expiresAt = expiresAt[:10] // Extract YYYY-MM-DD part
+		const dateFormatLength = 10
+		if len(expiresAt) >= dateFormatLength {
+			expiresAt = expiresAt[:dateFormatLength] // Extract YYYY-MM-DD part
 		}
 	}
 
@@ -99,32 +107,36 @@ func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken *gitlab.PersonalAc
 	}
 }
 
+// ConvertGroupAccessTokenToDTOTokens converts multiple GitLab group access tokens to DTO tokens.
 func ConvertGroupAccessTokenToDTOTokens(groupAccessTokens []*gitlab.GroupAccessToken) []dto.Token {
-	var tokens []dto.Token
+	tokens := make([]dto.Token, 0, len(groupAccessTokens))
 	for _, groupAccessToken := range groupAccessTokens {
 		tokens = append(tokens, ConvertGroupAccessTokenToDTOToken(groupAccessToken))
 	}
 	return tokens
 }
 
+// ConvertGroupDeployTokenToDTOTokens converts multiple GitLab group deploy tokens to DTO tokens.
 func ConvertGroupDeployTokenToDTOTokens(groupDeployTokens []*gitlab.DeployToken) []dto.Token {
-	var tokens []dto.Token
+	tokens := make([]dto.Token, 0, len(groupDeployTokens))
 	for _, groupDeployToken := range groupDeployTokens {
 		tokens = append(tokens, ConvertGroupDeployTokenToDTOToken(groupDeployToken))
 	}
 	return tokens
 }
 
+// ConvertProjectAccessTokenToDTOTokens converts multiple GitLab project access tokens to DTO tokens.
 func ConvertProjectAccessTokenToDTOTokens(projectAccessTokens []*gitlab.ProjectAccessToken) []dto.Token {
-	var tokens []dto.Token
+	tokens := make([]dto.Token, 0, len(projectAccessTokens))
 	for _, projectAccessToken := range projectAccessTokens {
 		tokens = append(tokens, ConvertProjectAccessTokenToDTOToken(projectAccessToken))
 	}
 	return tokens
 }
 
+// ConvertProjectDeployTokenToDTOTokens converts multiple GitLab project deploy tokens to DTO tokens.
 func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []*gitlab.DeployToken) []dto.Token {
-	var tokens []dto.Token
+	tokens := make([]dto.Token, 0, len(projectDeployTokens))
 	for _, projectDeployToken := range projectDeployTokens {
 		tokens = append(tokens, ConvertProjectDeployTokenToDTOToken(projectDeployToken))
 	}
@@ -132,7 +144,7 @@ func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []*gitlab.DeployTo
 }
 
 func convertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []*gitlab.PersonalAccessToken) []dto.Token {
-	var tokens []dto.Token
+	tokens := make([]dto.Token, 0, len(personalGitlabTokens))
 	for _, personalGitlabToken := range personalGitlabTokens {
 		tokens = append(tokens, ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken))
 	}

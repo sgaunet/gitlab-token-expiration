@@ -1,7 +1,9 @@
+// Package views provides rendering functionality for displaying token information.
 package views
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 )
 
+// TableOutput represents a table renderer for token display.
 type TableOutput struct {
 	HeaderOption    bool
 	ColorOption     bool
@@ -17,32 +20,38 @@ type TableOutput struct {
 	nbDaysBeforeExp uint
 }
 
+// TableOutputOption is a function that configures TableOutput.
 type TableOutputOption func(*TableOutput)
 
+// WithHeaderOption configures whether to display table headers.
 func WithHeaderOption(headerOption bool) TableOutputOption {
 	return func(t *TableOutput) {
 		t.HeaderOption = headerOption
 	}
 }
 
+// WithColorOption configures whether to use colored output.
 func WithColorOption(colorOption bool) TableOutputOption {
 	return func(t *TableOutput) {
 		t.ColorOption = colorOption
 	}
 }
 
+// WithPrintRevokedOption configures whether to display revoked tokens.
 func WithPrintRevokedOption(printRevoked bool) TableOutputOption {
 	return func(t *TableOutput) {
 		t.printRevoked = printRevoked
 	}
 }
 
+// WithNbDaysBeforeExp configures the number of days before expiration to highlight.
 func WithNbDaysBeforeExp(nbDaysBeforeExp uint) TableOutputOption {
 	return func(t *TableOutput) {
 		t.nbDaysBeforeExp = nbDaysBeforeExp
 	}
 }
 
+// NewTableOutput creates a new TableOutput with the given options.
 func NewTableOutput(opts ...TableOutputOption) TableOutput {
 	t := TableOutput{}
 	for _, opt := range opts {
@@ -51,6 +60,7 @@ func NewTableOutput(opts ...TableOutputOption) TableOutput {
 	return t
 }
 
+// Render displays the tokens in a table format.
 func (t TableOutput) Render(tokens []dto.Token) error {
 	tData := pterm.TableData{}
 	if t.HeaderOption {
@@ -60,7 +70,7 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 		if !t.printRevoked && token.Revoked {
 			continue
 		}
-		tData = append(tData, []string{fmt.Sprintf("%d", token.ID),
+		tData = append(tData, []string{strconv.Itoa(token.ID),
 			token.Source, token.Type, token.Name,
 			t.prettyPrintBool(token.Revoked, true),
 			t.prettyPrintExpiresAt(token.ExpiresAt)})
@@ -79,7 +89,7 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 
 
 // prettyPrintBool returns a string representation of a boolean value
-// with red color if value is equal to coloredValue
+// with red color if value is equal to coloredValue.
 func (t TableOutput) prettyPrintBool(b bool, coloredValue bool) string {
 	red := color.New(color.FgRed).SprintFunc()
 	bStr := strconv.FormatBool(b)
@@ -109,7 +119,7 @@ func (t TableOutput) prettyPrintExpiresAt(d string) string {
 	if now.After(date) {
 		return red(d)
 	}
-	if now.AddDate(0, 0, int(t.nbDaysBeforeExp)).After(date) {
+	if t.nbDaysBeforeExp <= math.MaxInt32 && now.AddDate(0, 0, int(t.nbDaysBeforeExp)).After(date) {
 		return yellow(d)
 	}
 	return d
