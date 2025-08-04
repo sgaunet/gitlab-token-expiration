@@ -211,6 +211,6 @@ func (a *App) GetPersonalAccessTokens(_ context.Context) ([]dto.Token, error) {
 		return nil, fmt.Errorf("failed to list personal access tokens: %w", err)
 	}
 
-	res := convertPersonalGitlabTokenToDTOTokens(tokens)
+	res := ConvertPersonalGitlabTokenToDTOTokens(tokens)
 	return res, nil
 }

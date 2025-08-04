@@ -143,7 +143,8 @@ func ConvertProjectDeployTokenToDTOTokens(projectDeployTokens []*gitlab.DeployTo
 	return tokens
 }
 
-func convertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []*gitlab.PersonalAccessToken) []dto.Token {
+// ConvertPersonalGitlabTokenToDTOTokens converts multiple GitLab personal access tokens to DTO tokens.
+func ConvertPersonalGitlabTokenToDTOTokens(personalGitlabTokens []*gitlab.PersonalAccessToken) []dto.Token {
 	tokens := make([]dto.Token, 0, len(personalGitlabTokens))
 	for _, personalGitlabToken := range personalGitlabTokens {
 		tokens = append(tokens, ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken))
