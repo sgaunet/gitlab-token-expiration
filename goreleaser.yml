@@ -2,10 +2,7 @@ version: 2
 project_name: "gitlab-token-expiration"
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod download
-    # you may remove this if you don't need go generate
-    #- go generate ./...
 builds:
   - env:
       - CGO_ENABLED=0
@@ -38,7 +35,9 @@ changelog:
       - '^test:'
 
 brews:
-  - homepage: 'https://github.com/sgaunet/homebrew-tools'
+  - ids: [default]  # Use the default archive (tar.gz/zip), not binary
+    homepage: 'https://github.com/sgaunet/gitlab-token-expiration'
+    description: ''
     directory: Formula
     commit_author:
       name: sgaunet
@@ -46,3 +45,10 @@ brews:
     repository:
       owner: sgaunet
       name: homebrew-tools
+      # Token with 'repo' scope is required for pushing to a different repository
+      token: '{{ .Env.HOMEBREW_TAP_TOKEN }}'
+    url_template: 'https://github.com/sgaunet/gitlab-token-expiration/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
+    install: |
+      bin.install "{{ .ArtifactName }}" => "gitlab-token-expiration"
+    test: |
+      system "#{bin}/gitlab-token-expiration", "-h"
