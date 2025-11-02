@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/fatih/color v1.18.0
-	github.com/pterm/pterm v0.12.81
+	github.com/pterm/pterm v0.12.82
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	gitlab.com/gitlab-org/api/client-go v0.157.1
