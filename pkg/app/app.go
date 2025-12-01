@@ -4,7 +4,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -57,7 +56,7 @@ func NewApp(v views.Renderer, opts ...Option) *App {
 	app := &App{
 		gitlabClient: client,
 		view:         v,
-		log:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		log:          slog.New(slog.DiscardHandler),
 	}
 	for _, opt := range opts {
 		opt(app)
