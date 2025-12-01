@@ -260,12 +260,12 @@ func TestConvertGroupAccessTokenToDTOTokens(t *testing.T) {
 	}
 
 	result := app.ConvertGroupAccessTokenToDTOTokens(input)
-	
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, 1, result[0].ID)
+	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "token-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
-	assert.Equal(t, 2, result[1].ID)
+	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "token-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
 }
@@ -289,12 +289,12 @@ func TestConvertGroupDeployTokenToDTOTokens(t *testing.T) {
 	}
 
 	result := app.ConvertGroupDeployTokenToDTOTokens(input)
-	
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, 1, result[0].ID)
+	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "deploy-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
-	assert.Equal(t, 2, result[1].ID)
+	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "deploy-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
 }
@@ -322,12 +322,12 @@ func TestConvertProjectAccessTokenToDTOTokens(t *testing.T) {
 	}
 
 	result := app.ConvertProjectAccessTokenToDTOTokens(input)
-	
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, 1, result[0].ID)
+	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "project-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
-	assert.Equal(t, 2, result[1].ID)
+	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "project-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
 }
@@ -351,12 +351,12 @@ func TestConvertProjectDeployTokenToDTOTokens(t *testing.T) {
 	}
 
 	result := app.ConvertProjectDeployTokenToDTOTokens(input)
-	
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, 1, result[0].ID)
+	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "deploy-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
-	assert.Equal(t, 2, result[1].ID)
+	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "deploy-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
 }
@@ -380,13 +380,13 @@ func TestConvertPersonalGitlabTokenToDTOTokens(t *testing.T) {
 	}
 
 	result := app.ConvertPersonalGitlabTokenToDTOTokens(input)
-	
+
 	assert.Len(t, result, 2)
-	assert.Equal(t, 1, result[0].ID)
+	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "personal-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
 	assert.Equal(t, "personal_access_token", result[0].Type)
-	assert.Equal(t, 2, result[1].ID)
+	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "personal-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
 	assert.Equal(t, "personal_access_token", result[1].Type)

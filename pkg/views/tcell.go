@@ -70,7 +70,7 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 		if !t.printRevoked && token.Revoked {
 			continue
 		}
-		tData = append(tData, []string{strconv.Itoa(token.ID),
+		tData = append(tData, []string{strconv.FormatInt(token.ID, 10),
 			token.Source, token.Type, token.Name,
 			t.prettyPrintBool(token.Revoked, true),
 			t.prettyPrintExpiresAt(token.ExpiresAt)})
