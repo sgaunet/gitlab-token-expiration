@@ -6,7 +6,7 @@ package dto
 type Token struct {
 	Source    string `json:"source"` // project or group or personal
 	Type      string `json:"type"`   // pat or deploy_token or access_token
-	ID        int    `json:"id"`
+	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	Revoked   bool   `json:"revoked"`
 	ExpiresAt string `json:"expires_at"`

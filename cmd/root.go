@@ -9,7 +9,7 @@ import (
 // DefaultNbDaysBeforeExp is the default number of days before expiration to display in yellow.
 const DefaultNbDaysBeforeExp = 60
 
-var gitlabID int         // Gitlab project or group ID
+var gitlabID int64       // Gitlab project or group ID
 var nbDaysBeforeExp uint // Number of days before expiration date to display it in yellow
 var printRevoked bool
 var printNoHeader bool
@@ -33,7 +33,7 @@ func Execute() {
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	groupCmd.Flags().IntVarP(&gitlabID, "id", "i", 0, "Gitlab Group ID")
+	groupCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0, "Gitlab Group ID")
 	groupCmd.Flags().BoolVarP(&noRecursiveOption, "no-recursive", "n", false,
 		"Do not list tokens of subgroups and projects")
 	groupCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
@@ -43,7 +43,7 @@ func init() {
 		"Number of days before expiration date to display it in yellow")
 	rootCmd.AddCommand(groupCmd)
 
-	projectCmd.Flags().IntVarP(&gitlabID, "id", "i", 0, "Gitlab Project ID")
+	projectCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0, "Gitlab Project ID")
 	projectCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
 	projectCmd.Flags().BoolVarP(&printNoHeader, "no-header", "H", false, "Do not print header")
 	projectCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")

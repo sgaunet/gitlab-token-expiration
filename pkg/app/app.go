@@ -4,7 +4,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -57,7 +56,7 @@ func NewApp(v views.Renderer, opts ...Option) *App {
 	app := &App{
 		gitlabClient: client,
 		view:         v,
-		log:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		log:          slog.New(slog.DiscardHandler),
 	}
 	for _, opt := range opts {
 		opt(app)
@@ -152,7 +151,7 @@ func (a *App) GetTokensOfGroups(_ context.Context, groups []*gitlab.Group) ([]dt
 }
 
 // GetProject returns the project that matches the given ID.
-func (a *App) GetProject(projectID int) (*gitlab.Project, error) {
+func (a *App) GetProject(projectID int64) (*gitlab.Project, error) {
 	project, _, err := a.gitlabClient.Projects.GetProject(projectID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project %d: %w", projectID, err)
@@ -161,7 +160,7 @@ func (a *App) GetProject(projectID int) (*gitlab.Project, error) {
 }
 
 // GetGroup returns the group that matches the given ID.
-func (a *App) GetGroup(groupID int) (*gitlab.Group, error) {
+func (a *App) GetGroup(groupID int64) (*gitlab.Group, error) {
 	group, _, err := a.gitlabClient.Groups.GetGroup(groupID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get group %d: %w", groupID, err)
@@ -170,7 +169,7 @@ func (a *App) GetGroup(groupID int) (*gitlab.Group, error) {
 }
 
 // GetSubGroups returns the subgroups of the group that matches the given ID.
-func (a *App) GetSubGroups(groupID int) ([]*gitlab.Group, error) {
+func (a *App) GetSubGroups(groupID int64) ([]*gitlab.Group, error) {
 	groups, _, err := a.gitlabClient.Groups.ListSubGroups(groupID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subgroups for group %d: %w", groupID, err)
@@ -179,7 +178,7 @@ func (a *App) GetSubGroups(groupID int) ([]*gitlab.Group, error) {
 }
 
 // GetRecursiveProjectsOfGroup returns the projects of the group that matches the given ID.
-func (a *App) GetRecursiveProjectsOfGroup(groupID int) ([]*gitlab.Project, error) {
+func (a *App) GetRecursiveProjectsOfGroup(groupID int64) ([]*gitlab.Project, error) {
 	// Get projects of the group
 	projects, _, err := a.gitlabClient.Groups.ListGroupProjects(groupID, nil)
 	if err != nil {
