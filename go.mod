@@ -7,7 +7,7 @@ require (
 	github.com/pterm/pterm v0.12.82
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/gitlab-org/api/client-go v1.3.1
+	gitlab.com/gitlab-org/api/client-go v1.10.0
 )
 
 require (
@@ -18,6 +18,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gookit/color v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
