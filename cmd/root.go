@@ -19,7 +19,16 @@ var printNoColor bool
 var rootCmd = &cobra.Command{
 	Use:   "gitlab-expiration-token",
 	Short: "Tool to list tokens with expiration date to check if they are expired or not.",
-	Long:  `Tool to list tokens with expiration date to check if they are expired or not.`,
+	Long: `Tool to list tokens with expiration date to check if they are expired or not.
+
+Environment Variables:
+  GITLAB_TOKEN  (required) GitLab personal access token with API access
+  GITLAB_URI    (optional) GitLab instance URL (defaults to https://gitlab.com)
+
+Examples:
+  export GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
+  export GITLAB_URI=https://gitlab.example.com
+  gitlab-token-expiration group -i 12345`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
