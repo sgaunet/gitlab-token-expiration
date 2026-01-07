@@ -47,7 +47,18 @@ func WithRevokedToken(printRevoked bool) Option {
 // NewApp returns a new App struct.
 func NewApp(v views.Renderer, opts ...Option) *App {
 	token := os.Getenv("GITLAB_TOKEN")
-	client, err := gitlab.NewClient(token)
+	gitlabURI := os.Getenv("GITLAB_URI")
+
+	var client *gitlab.Client
+	var err error
+
+	// If GITLAB_URI is set, use it as the base URL
+	if gitlabURI != "" {
+		client, err = gitlab.NewClient(token, gitlab.WithBaseURL(gitlabURI))
+	} else {
+		client, err = gitlab.NewClient(token)
+	}
+
 	if err != nil {
 		// Handle error or use a fallback
 		client = nil
