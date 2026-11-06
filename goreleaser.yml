@@ -56,11 +56,14 @@ homebrew_casks:
       template: 'https://github.com/sgaunet/gitlab-token-expiration/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
 
     # Strip the Gatekeeper quarantine xattr so the installed binary can run.
+    # Uses Homebrew's declarative `postflight_steps` DSL (the Ruby `postflight`
+    # block is deprecated). `{{ .StagedPath }}` renders to Homebrew's
+    # `{{staged_path}}` token, expanded at install time.
     hooks:
       post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}"]
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}"]
           end
 
     commit_author:
