@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/spf13/cobra"
 )
 
@@ -16,11 +15,7 @@ var patCmd = &cobra.Command{
 	Short: "List gitlab personal access tokens",
 	Long:  `List personal access tokens from gitlab`,
 	Run: func(_ *cobra.Command, _ []string) {
-		v := views.NewTableOutput(views.WithColorOption(!printNoColor),
-			views.WithHeaderOption(!printNoHeader),
-			views.WithPrintRevokedOption(printRevoked),
-			views.WithNbDaysBeforeExp(nbDaysBeforeExp),
-		)
+		v := newTableOutput()
 		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
 
 		// l := initTrace(os.Getenv("DEBUGLEVEL"))
