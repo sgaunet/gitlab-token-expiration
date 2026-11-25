@@ -15,6 +15,11 @@ var patCmd = &cobra.Command{
 	Short: "List gitlab personal access tokens",
 	Long:  `List personal access tokens from gitlab`,
 	Run: func(_ *cobra.Command, _ []string) {
+		tokenFilter, err := newTokenFilter()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 		v := newTableOutput()
 		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
 
@@ -27,6 +32,7 @@ var patCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
+		tokens = tokenFilter.Apply(tokens)
 		if err := v.Render(tokens); err != nil {
 			fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
 			os.Exit(1)

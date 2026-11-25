@@ -27,6 +27,11 @@ of all its subgroups and projects.
 Without --id, list the tokens of every group where you have the Owner role
 (the role GitLab requires to list group tokens).`,
 	Run: func(_ *cobra.Command, _ []string) {
+		tokenFilter, err := newTokenFilter()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 		v := newTableOutput()
 		// When several groups are processed, skip those whose tokens cannot be read
 		// instead of failing the whole run.
@@ -38,10 +43,7 @@ Without --id, list the tokens of every group where you have the Owner role
 		)
 		ctx := context.Background()
 
-		var (
-			tokens []dto.Token
-			err    error
-		)
+		var tokens []dto.Token
 		switch {
 		case gitlabID == 0:
 			tokens, err = tokensOfAllGroups(ctx, a)
@@ -55,6 +57,7 @@ Without --id, list the tokens of every group where you have the Owner role
 			os.Exit(1)
 		}
 		printSkipped(a)
+		tokens = tokenFilter.Apply(tokens)
 		if err := v.Render(tokens); err != nil {
 			fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
 			os.Exit(1)
