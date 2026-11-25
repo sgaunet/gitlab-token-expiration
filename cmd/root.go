@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/pterm/pterm"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/filter"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
@@ -122,7 +124,8 @@ func newRenderer() (views.Renderer, error) { //nolint:ireturn // picks the rende
 	format := strings.ToLower(outputFormat)
 	switch format {
 	case views.FormatTable:
-		return views.NewTableOutput(views.WithColorOption(!printNoColor),
+		// fatih/color sets NoColor when stdout is not a terminal or NO_COLOR is set.
+		return views.NewTableOutput(views.WithColorOption(!printNoColor && !color.NoColor),
 			views.WithHeaderOption(!printNoHeader),
 			views.WithPrintRevokedOption(printRevoked),
 			views.WithNbDaysBeforeExp(nbDaysBeforeExp),
@@ -145,6 +148,13 @@ func Execute() {
 }
 
 func init() {
+	// -C also disables the colors of the progress spinners on stderr, which
+	// run before the table is rendered.
+	rootCmd.PersistentPreRun = func(_ *cobra.Command, _ []string) {
+		if printNoColor {
+			pterm.DisableColor()
+		}
+	}
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	groupCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0,

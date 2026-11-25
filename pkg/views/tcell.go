@@ -62,11 +62,6 @@ func NewTableOutput(opts ...TableOutputOption) TableOutput {
 
 // Render displays the tokens in a table format.
 func (t TableOutput) Render(tokens []dto.Token) error {
-	if !t.ColorOption {
-		// The table borders and header are styled by pterm itself, so the
-		// cell values being uncolored is not enough: disable pterm colors too.
-		pterm.DisableColor()
-	}
 	tData := pterm.TableData{}
 	if t.HeaderOption {
 		tData = append(tData, []string{"ID", "Source", "Type", "Name", "Revoked", "Expires at"})
@@ -82,6 +77,13 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 	}
 	// Create a table with a header and the defined data, then render it
 	table := pterm.DefaultTable
+	if !t.ColorOption {
+		// pterm styles the borders and the header itself: use empty styles,
+		// which write no escape sequence, instead of changing pterm globals.
+		plain := pterm.NewStyle()
+		table.HeaderStyle, table.SeparatorStyle = plain, plain
+		table.HeaderRowSeparatorStyle, table.RowSeparatorStyle = plain, plain
+	}
 	if t.HeaderOption {
 		table = *table.WithHasHeader()
 	}
@@ -91,7 +93,6 @@ func (t TableOutput) Render(tokens []dto.Token) error {
 	}
 	return nil
 }
-
 
 // prettyPrintBool returns a string representation of a boolean value
 // with red color if value is equal to coloredValue.
