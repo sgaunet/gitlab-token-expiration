@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
+	"github.com/sgaunet/gitlab-token-expiration/pkg/filter"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/spf13/cobra"
 )
@@ -19,9 +21,11 @@ var printRevoked bool
 var printNoHeader bool
 var printNoColor bool
 var parallel int          // Maximum number of concurrent GitLab API calls
-var filterName string     // Regular expression on token names
-var invertFilter bool     // Keep the tokens that do NOT match filterName
-var filterIgnoreCase bool // Case-insensitive filterName
+var filterName string     // Keep the tokens whose name matches this regular expression
+var excludeName string    // Hide the tokens whose name matches this regular expression
+var filterSource string   // Keep the tokens whose source matches this regular expression
+var excludeSource string  // Hide the tokens whose source matches this regular expression
+var filterIgnoreCase bool // Case-insensitive match for every filter pattern
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
@@ -53,27 +57,53 @@ func printSkipped(a *app.App) {
 	}
 }
 
-// errFilterWithoutPattern is returned when --invert or --ignore-case is set without --filter-name.
-var errFilterWithoutPattern = errors.New("--invert and --ignore-case require --filter-name")
+// errIgnoreCaseWithoutPattern is returned when --ignore-case is set without any filter pattern.
+var errIgnoreCaseWithoutPattern = errors.New("--ignore-case requires a --filter-* or --exclude-* pattern")
 
-// addFilterFlags adds the token name filter flags to cmd.
-func addFilterFlags(cmd *cobra.Command) {
+// addFilterFlags adds the token filter flags to cmd. The source flags are only
+// added when withSource is set, since personal access tokens have no source.
+func addFilterFlags(cmd *cobra.Command, withSource bool) {
 	cmd.Flags().StringVar(&filterName, "filter-name", "",
-		"Only show tokens whose name matches this regular expression (use | for OR)")
-	cmd.Flags().BoolVarP(&invertFilter, "invert", "v", false,
-		"Invert --filter-name: hide the tokens whose name matches")
+		"Only show tokens whose name matches this regular expression")
+	cmd.Flags().StringVar(&excludeName, "exclude-name", "",
+		"Hide tokens whose name matches this regular expression")
+	if withSource {
+		cmd.Flags().StringVar(&filterSource, "filter-source", "",
+			"Only show tokens whose source (group or project path) matches this regular expression")
+		cmd.Flags().StringVar(&excludeSource, "exclude-source", "",
+			"Hide tokens whose source (group or project path) matches this regular expression")
+	}
 	cmd.Flags().BoolVar(&filterIgnoreCase, "ignore-case", false,
-		"Case-insensitive --filter-name")
+		"Case-insensitive match for every --filter-* and --exclude-* pattern")
 }
 
-// newNameFilter builds the token name filter from the command-line flags.
-func newNameFilter() (*app.NameFilter, error) {
-	if filterName == "" && (invertFilter || filterIgnoreCase) {
-		return nil, errFilterWithoutPattern
+// newTokenFilter builds the token filter from the command-line flags.
+func newTokenFilter() (filter.TokenFilter, error) {
+	var f filter.TokenFilter
+	patterns := []struct {
+		flag    string
+		pattern string
+		dst     **regexp.Regexp
+	}{
+		{"--filter-name", filterName, &f.IncludeName},
+		{"--exclude-name", excludeName, &f.ExcludeName},
+		{"--filter-source", filterSource, &f.IncludeSource},
+		{"--exclude-source", excludeSource, &f.ExcludeSource},
 	}
-	f, err := app.NewNameFilter(filterName, invertFilter, filterIgnoreCase)
-	if err != nil {
-		return nil, fmt.Errorf("--filter-name: %w", err)
+	hasPattern := false
+	for _, p := range patterns {
+		if p.pattern == "" {
+			continue
+		}
+		re, err := filter.CompilePattern(p.pattern, filterIgnoreCase)
+		if err != nil {
+			return filter.TokenFilter{}, fmt.Errorf("%s: %w", p.flag, err)
+		}
+		*p.dst = re
+		hasPattern = true
+	}
+	if filterIgnoreCase && !hasPattern {
+		return filter.TokenFilter{}, errIgnoreCaseWithoutPattern
 	}
 	return f, nil
 }
@@ -109,7 +139,7 @@ func init() {
 		"Number of days before expiration date to display it in yellow")
 	groupCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
-	addFilterFlags(groupCmd)
+	addFilterFlags(groupCmd, true)
 	rootCmd.AddCommand(groupCmd)
 
 	projectCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0,
@@ -121,7 +151,7 @@ func init() {
 		"Number of days before expiration date to display it in yellow")
 	projectCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
-	addFilterFlags(projectCmd)
+	addFilterFlags(projectCmd, true)
 	rootCmd.AddCommand(projectCmd)
 
 	patCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
@@ -129,6 +159,6 @@ func init() {
 	patCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")
 	patCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp,
 		"Number of days before expiration date to display it in yellow")
-	addFilterFlags(patCmd)
+	addFilterFlags(patCmd, false)
 	rootCmd.AddCommand(patCmd)
 }

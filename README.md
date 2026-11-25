@@ -18,7 +18,7 @@ This tool lists all sort of expirable tokens of gitlab projects, gitlab groups a
 * **Fast on large instances**: tokens are retrieved concurrently, tunable with `-p, --parallel` ([details](#parallelism)).
 * **Robust**: a group or project you are not allowed to read (`401`/`403`) is skipped with a warning instead of stopping the whole run.
 * **Complete**: every list call is paginated, and `group -i` goes down subgroups at any depth.
-* **Filter by token name**: `--filter-name <regex>` shows only the matching tokens, `-v, --invert` hides them instead (like `grep -v`), `--ignore-case` ignores the case ([details](#filtering-tokens-by-name)).
+* **Filter tokens**: keep or hide tokens by name or by source (group or project path) with regular expressions: `--filter-name`, `--exclude-name`, `--filter-source`, `--exclude-source`, `--ignore-case` ([details](#filtering-tokens)).
 
 ## Getting started
 
@@ -30,9 +30,8 @@ $ gitlab-token-expiration group         # all groups where you are Owner
 $ gitlab-token-expiration project       # all projects where you are at least Maintainer
 $ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
 
-# Only the tokens whose name matches a regex, or all but those ones with -v
-$ gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas'
-$ gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas' -v
+# Only the tokens of the groups under team-a, except the renovate ones
+$ gitlab-token-expiration group --filter-source '^team-a/' --exclude-name renovate
 
 $ gitlab-token-expiration -h
 ```
@@ -62,7 +61,7 @@ gitlab-token-expiration pat
 gitlab-token-expiration project --filter-name '^renovate|-ci$'
 
 # Any of the above, hiding the tokens whose name matches a regex, whatever the case
-gitlab-token-expiration pat --filter-name '^tmp-' --invert --ignore-case
+gitlab-token-expiration pat --exclude-name '^tmp-' --ignore-case
 ```
 
 ### Listing all groups and projects
@@ -86,19 +85,32 @@ Tokens of the groups and projects are retrieved concurrently. The `-p, --paralle
 gitlab-token-expiration group -p 10
 ```
 
-### Filtering tokens by name
+### Filtering tokens
 
-`--filter-name` takes a regular expression ([Go RE2 syntax](https://github.com/google/re2/wiki/Syntax)) matched anywhere in the token name. Use `|` to match several names, `^` and `$` to anchor. It works with `group`, `project` and `pat`.
+Tokens can be kept or hidden by name, or by source (the group or project path shown in the `Source` column):
+
+| Flag                    | Effect                                              | Commands                   |
+|-------------------------|-----------------------------------------------------|----------------------------|
+| `--filter-name <re>`    | Only show tokens whose name matches                 | `group`, `project`, `pat`  |
+| `--exclude-name <re>`   | Hide tokens whose name matches                      | `group`, `project`, `pat`  |
+| `--filter-source <re>`  | Only show tokens whose source matches               | `group`, `project`         |
+| `--exclude-source <re>` | Hide tokens whose source matches                    | `group`, `project`         |
+| `--ignore-case`         | Case-insensitive match, for every pattern           | `group`, `project`, `pat`  |
+
+A token is shown when it matches every `--filter-*` pattern given and none of the `--exclude-*` patterns. Patterns are regular expressions ([Go RE2 syntax](https://github.com/google/re2/wiki/Syntax)) matched anywhere in the value: use `|` to match several values, `^` and `$` to anchor. The filters are applied after the tokens are retrieved, so they do not reduce the number of API calls.
 
 ```bash
-# Only the tokens whose name contains hjh/supervision/dev/nicolas
-gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas'
+# Only the tokens of the groups and projects under team-a
+gitlab-token-expiration group --filter-source '^team-a/'
 
-# Every token except those ones (like grep -v)
-gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas' -v
+# Same, except the renovate tokens
+gitlab-token-expiration group --filter-source '^team-a/' --exclude-name renovate
 
-# Hide tokens starting with hjh/ or named renovate, whatever the case
-gitlab-token-expiration project --filter-name '^hjh/|^renovate$' --invert --ignore-case
+# Every token except those of the sandbox groups and projects
+gitlab-token-expiration group --exclude-source '(^|/)sandbox(/|$)'
+
+# Only the CI tokens, whatever the case (ci-deploy, Deploy-CI, ...)
+gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 ```
 
 ### Common flags
@@ -108,9 +120,9 @@ gitlab-token-expiration project --filter-name '^hjh/|^renovate$' --invert --igno
 | `-i, --id`                           | Group or project ID (`group` and `project` only)               |
 | `-p, --parallel`                     | Maximum number of concurrent GitLab API calls (default `5`, `group` and `project` only) |
 | `-d, --days-before-expiration`       | Tokens expiring within this number of days are shown in yellow (default `60`) |
-| `--filter-name`                      | Only show tokens whose name matches this regular expression    |
-| `-v, --invert`                       | With `--filter-name`, hide the matching tokens instead (like `grep -v`) |
-| `--ignore-case`                      | With `--filter-name`, case-insensitive match                   |
+| `--filter-name`, `--exclude-name`    | Only show / hide tokens whose name matches a regular expression ([details](#filtering-tokens)) |
+| `--filter-source`, `--exclude-source` | Only show / hide tokens whose source matches a regular expression (`group` and `project` only) |
+| `--ignore-case`                      | Case-insensitive match for every filter pattern                |
 | `-r, --revoked`                      | Also print revoked tokens                                      |
 | `-H, --no-header`                    | Do not print the table header                                  |
 | `-C, --no-color`                     | Do not print colors                                            |
