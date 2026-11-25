@@ -18,6 +18,7 @@ This tool lists all sort of expirable tokens of gitlab projects, gitlab groups a
 * **Fast on large instances**: tokens are retrieved concurrently, tunable with `-p, --parallel` ([details](#parallelism)).
 * **Robust**: a group or project you are not allowed to read (`401`/`403`) is skipped with a warning instead of stopping the whole run.
 * **Complete**: every list call is paginated, and `group -i` goes down subgroups at any depth.
+* **Filter by token name**: `--filter-name <regex>` shows only the matching tokens, `-v, --invert` hides them instead (like `grep -v`), `--ignore-case` ignores the case ([details](#filtering-tokens-by-name)).
 
 ## Getting started
 
@@ -28,6 +29,11 @@ $ export GITLAB_TOKEN=yourtoken  # needs at least the read_api scope
 $ gitlab-token-expiration group         # all groups where you are Owner
 $ gitlab-token-expiration project       # all projects where you are at least Maintainer
 $ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
+
+# Only the tokens whose name matches a regex, or all but those ones with -v
+$ gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas'
+$ gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas' -v
+
 $ gitlab-token-expiration -h
 ```
 
@@ -51,6 +57,12 @@ gitlab-token-expiration project -i 678
 
 # Your personal access tokens
 gitlab-token-expiration pat
+
+# Any of the above, restricted to the tokens whose name matches a regex
+gitlab-token-expiration project --filter-name '^renovate|-ci$'
+
+# Any of the above, hiding the tokens whose name matches a regex, whatever the case
+gitlab-token-expiration pat --filter-name '^tmp-' --invert --ignore-case
 ```
 
 ### Listing all groups and projects
