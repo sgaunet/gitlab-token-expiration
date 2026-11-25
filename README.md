@@ -74,6 +74,21 @@ Tokens of the groups and projects are retrieved concurrently. The `-p, --paralle
 gitlab-token-expiration group -p 10
 ```
 
+### Filtering tokens by name
+
+`--filter-name` takes a regular expression ([Go RE2 syntax](https://github.com/google/re2/wiki/Syntax)) matched anywhere in the token name. Use `|` to match several names, `^` and `$` to anchor. It works with `group`, `project` and `pat`.
+
+```bash
+# Only the tokens whose name contains hjh/supervision/dev/nicolas
+gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas'
+
+# Every token except those ones (like grep -v)
+gitlab-token-expiration group --filter-name 'hjh/supervision/dev/nicolas' -v
+
+# Hide tokens starting with hjh/ or named renovate, whatever the case
+gitlab-token-expiration project --filter-name '^hjh/|^renovate$' --invert --ignore-case
+```
+
 ### Common flags
 
 | Flag                                 | Description                                                    |
@@ -81,6 +96,9 @@ gitlab-token-expiration group -p 10
 | `-i, --id`                           | Group or project ID (`group` and `project` only)               |
 | `-p, --parallel`                     | Maximum number of concurrent GitLab API calls (default `5`, `group` and `project` only) |
 | `-d, --days-before-expiration`       | Tokens expiring within this number of days are shown in yellow (default `60`) |
+| `--filter-name`                      | Only show tokens whose name matches this regular expression    |
+| `-v, --invert`                       | With `--filter-name`, hide the matching tokens instead (like `grep -v`) |
+| `--ignore-case`                      | With `--filter-name`, case-insensitive match                   |
 | `-r, --revoked`                      | Also print revoked tokens                                      |
 | `-H, --no-header`                    | Do not print the table header                                  |
 | `-C, --no-color`                     | Do not print colors                                            |

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -17,7 +18,10 @@ var nbDaysBeforeExp uint // Number of days before expiration date to display it 
 var printRevoked bool
 var printNoHeader bool
 var printNoColor bool
-var parallel int // Maximum number of concurrent GitLab API calls
+var parallel int          // Maximum number of concurrent GitLab API calls
+var filterName string     // Regular expression on token names
+var invertFilter bool     // Keep the tokens that do NOT match filterName
+var filterIgnoreCase bool // Case-insensitive filterName
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
@@ -47,6 +51,31 @@ func printSkipped(a *app.App) {
 	if len(skipped) > 0 {
 		fmt.Fprintf(os.Stderr, "Warning: %d resource(s) skipped because access was denied\n", len(skipped))
 	}
+}
+
+// errFilterWithoutPattern is returned when --invert or --ignore-case is set without --filter-name.
+var errFilterWithoutPattern = errors.New("--invert and --ignore-case require --filter-name")
+
+// addFilterFlags adds the token name filter flags to cmd.
+func addFilterFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&filterName, "filter-name", "",
+		"Only show tokens whose name matches this regular expression (use | for OR)")
+	cmd.Flags().BoolVarP(&invertFilter, "invert", "v", false,
+		"Invert --filter-name: hide the tokens whose name matches")
+	cmd.Flags().BoolVar(&filterIgnoreCase, "ignore-case", false,
+		"Case-insensitive --filter-name")
+}
+
+// newNameFilter builds the token name filter from the command-line flags.
+func newNameFilter() (*app.NameFilter, error) {
+	if filterName == "" && (invertFilter || filterIgnoreCase) {
+		return nil, errFilterWithoutPattern
+	}
+	f, err := app.NewNameFilter(filterName, invertFilter, filterIgnoreCase)
+	if err != nil {
+		return nil, fmt.Errorf("--filter-name: %w", err)
+	}
+	return f, nil
 }
 
 // newTableOutput returns the table renderer configured from the command-line flags.
@@ -80,6 +109,7 @@ func init() {
 		"Number of days before expiration date to display it in yellow")
 	groupCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
+	addFilterFlags(groupCmd)
 	rootCmd.AddCommand(groupCmd)
 
 	projectCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0,
@@ -91,6 +121,7 @@ func init() {
 		"Number of days before expiration date to display it in yellow")
 	projectCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
+	addFilterFlags(projectCmd)
 	rootCmd.AddCommand(projectCmd)
 
 	patCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
@@ -98,5 +129,6 @@ func init() {
 	patCmd.Flags().BoolVarP(&printNoColor, "no-color", "C", false, "Do not print color")
 	patCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp,
 		"Number of days before expiration date to display it in yellow")
+	addFilterFlags(patCmd)
 	rootCmd.AddCommand(patCmd)
 }
