@@ -62,6 +62,11 @@ func NewTableOutput(opts ...TableOutputOption) TableOutput {
 
 // Render displays the tokens in a table format.
 func (t TableOutput) Render(tokens []dto.Token) error {
+	if !t.ColorOption {
+		// The table borders and header are styled by pterm itself, so the
+		// cell values being uncolored is not enough: disable pterm colors too.
+		pterm.DisableColor()
+	}
 	tData := pterm.TableData{}
 	if t.HeaderOption {
 		tData = append(tData, []string{"ID", "Source", "Type", "Name", "Revoked", "Expires at"})
