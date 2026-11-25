@@ -124,7 +124,7 @@ gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 
 | Format            | Description                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
-| `table` (default) | Colored table for humans                                                    |
+| `table` (default) | Colored table for humans (plain when stdout is not a terminal, with `-C` or `NO_COLOR`) |
 | `json`            | JSON list of tokens                                                         |
 | `yaml`            | YAML list of tokens                                                         |
 
@@ -140,7 +140,7 @@ Each token of the JSON and YAML output has these fields:
 | `expires_at`      | Expiration date (`YYYY-MM-DD`), `null` when the token never expires         |
 | `expires_in_days` | Days from today (UTC) to `expires_at`: `0` the day it expires, negative once expired, `null` when it never expires |
 
-As with the table, revoked tokens are only included with `-r`, and the `--filter-*`/`--exclude-*` filters apply. `-H`, `-C` and `-d` only affect the table. Only the tokens are written on stdout (progress and warnings, such as skipped groups or projects, go to stderr), and an empty result is an empty list (`[]`), so the output can be piped to `jq` or `yq`.
+As with the table, revoked tokens are only included with `-r`, and the `--filter-*`/`--exclude-*` filters apply. `-H` and `-d` only affect the table; `-C` also removes the colors of the progress shown on stderr. Only the tokens are written on stdout (progress and warnings, such as skipped groups or projects, go to stderr), and an empty result is an empty list (`[]`), so the output can be piped to `jq` or `yq`.
 
 ```bash
 # Tokens expired or expiring within 30 days
@@ -163,7 +163,7 @@ gitlab-token-expiration project -o json | jq -r '.[] | select(.type == "project_
 | `-o, --output`                       | Output format: `table` (default), `json` or `yaml`             |
 | `-r, --revoked`                      | Also print revoked tokens                                      |
 | `-H, --no-header`                    | Do not print the table header                                  |
-| `-C, --no-color`                     | Do not print colors                                            |
+| `-C, --no-color`                     | Do not print colors (table and progress on stderr)             |
 
 ## Development
 

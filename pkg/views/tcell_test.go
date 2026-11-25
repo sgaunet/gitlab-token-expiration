@@ -1,13 +1,15 @@
 package views_test
 
 import (
+	"bytes"
 	"testing"
 
+	"github.com/pterm/pterm"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
 
 func TestNewTableOutput(t *testing.T) {
 	tests := []struct {
@@ -176,7 +178,7 @@ func TestTableOutput_PrettyPrintExpiresAt(t *testing.T) {
 					ExpiresAt: tt.date,
 				},
 			}
-			
+
 			err := tt.table.Render(tokens)
 			assert.NoError(t, err)
 		})
@@ -222,4 +224,45 @@ func TestTableOutput_ComplexScenario(t *testing.T) {
 	// Test that rendering doesn't return an error
 	err := table.Render(tokens)
 	assert.NoError(t, err)
+}
+
+// Not parallel: it changes pterm globals (colors and default output).
+func TestTableOutput_Render_ColorOption(t *testing.T) { //nolint:paralleltest // changes pterm globals
+	prevColor, prevOut := pterm.PrintColor, pterm.GetDefaultOutput()
+	t.Cleanup(func() {
+		if prevColor {
+			pterm.EnableColor()
+		} else {
+			pterm.DisableColor()
+		}
+		pterm.SetDefaultOutput(prevOut)
+	})
+	pterm.EnableColor() // as in a color terminal, whatever NO_COLOR/TERM say
+	tokens := []dto.Token{
+		{ID: 1, Source: "a/b", Type: dto.TypeProjectAccessToken, Name: "ci", ExpiresAt: "2020-01-01"},
+	}
+
+	// Order matters: the colored case runs after the plain one, so a plain
+	// table must not leave pterm colors disabled.
+	for _, tc := range []struct {
+		name     string
+		color    bool
+		wantANSI bool
+	}{
+		{"no color", false, false},
+		{"color", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			pterm.SetDefaultOutput(&buf)
+			table := views.NewTableOutput(views.WithColorOption(tc.color), views.WithHeaderOption(true))
+			require.NoError(t, table.Render(tokens))
+			assert.Contains(t, buf.String(), "ci")
+			if tc.wantANSI {
+				assert.Contains(t, buf.String(), "\x1b[", "colored table must keep its ANSI styling")
+			} else {
+				assert.NotContains(t, buf.String(), "\x1b[", "--no-color output must not contain ANSI escape sequences")
+			}
+		})
+	}
 }
