@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
+	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/gitlab-org/api/client-go"
 )
@@ -52,7 +53,7 @@ func TestConvertGroupAccessTokenToDTOToken(t *testing.T) {
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
 			assert.Equal(t, tt.expected, result.ExpiresAt)
 			assert.Equal(t, "group", result.Source)
-			assert.Equal(t, "access_token", result.Type)
+			assert.Equal(t, dto.TypeGroupAccessToken, result.Type)
 		})
 	}
 }
@@ -96,7 +97,7 @@ func TestConvertGroupDeployTokenToDTOToken(t *testing.T) {
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
 			assert.Equal(t, tt.expected, result.ExpiresAt)
 			assert.Equal(t, "group", result.Source)
-			assert.Equal(t, "deploy_token", result.Type)
+			assert.Equal(t, dto.TypeGroupDeployToken, result.Type)
 		})
 	}
 }
@@ -144,7 +145,7 @@ func TestConvertProjectAccessTokenToDTOToken(t *testing.T) {
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
 			assert.Equal(t, tt.expected, result.ExpiresAt)
 			assert.Equal(t, "project", result.Source)
-			assert.Equal(t, "access_token", result.Type)
+			assert.Equal(t, dto.TypeProjectAccessToken, result.Type)
 		})
 	}
 }
@@ -188,7 +189,7 @@ func TestConvertProjectDeployTokenToDTOToken(t *testing.T) {
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
 			assert.Equal(t, tt.expected, result.ExpiresAt)
 			assert.Equal(t, "project", result.Source)
-			assert.Equal(t, "deploy_token", result.Type)
+			assert.Equal(t, dto.TypeProjectDeployToken, result.Type)
 		})
 	}
 }
@@ -232,7 +233,7 @@ func TestConvertPersonalGitlabTokenToDTOToken(t *testing.T) {
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
 			assert.Equal(t, tt.expected, result.ExpiresAt)
 			assert.Equal(t, "", result.Source)
-			assert.Equal(t, "personal_access_token", result.Type)
+			assert.Equal(t, dto.TypePersonalAccessToken, result.Type)
 		})
 	}
 }
@@ -385,9 +386,9 @@ func TestConvertPersonalGitlabTokenToDTOTokens(t *testing.T) {
 	assert.Equal(t, int64(1), result[0].ID)
 	assert.Equal(t, "personal-1", result[0].Name)
 	assert.Equal(t, "2024-12-31", result[0].ExpiresAt)
-	assert.Equal(t, "personal_access_token", result[0].Type)
+	assert.Equal(t, dto.TypePersonalAccessToken, result[0].Type)
 	assert.Equal(t, int64(2), result[1].ID)
 	assert.Equal(t, "personal-2", result[1].Name)
 	assert.Equal(t, "", result[1].ExpiresAt)
-	assert.Equal(t, "personal_access_token", result[1].Type)
+	assert.Equal(t, dto.TypePersonalAccessToken, result[1].Type)
 }

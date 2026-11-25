@@ -2,8 +2,8 @@ package views_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
@@ -12,56 +12,102 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-var structuredTokens = []dto.Token{
-	{Source: "a/b", Type: "access_token", ID: 1, Name: "gat", ExpiresAt: "2027-01-01"},
-	{Source: "a/p", Type: "access_token", ID: 2, Name: "old", Revoked: true, ExpiresAt: "2025-01-01"},
+// fixedNow is the clock used by the tests: expires_in_days is computed from it.
+func fixedNow() time.Time {
+	return time.Date(2026, 11, 25, 10, 0, 0, 0, time.UTC)
 }
 
-func TestStructuredOutput_JSON(t *testing.T) {
+var structuredTokens = []dto.Token{
+	{Source: "team-a", Type: dto.TypeGroupAccessToken, ID: 1, Name: "ci&deploy <prod>", ExpiresAt: "2026-12-05"},
+	{Source: "team-a/app", Type: dto.TypeProjectAccessToken, ID: 2, Name: "forever"},
+	{Source: "team-a", Type: dto.TypeGroupDeployToken, ID: 3, Name: "expired", ExpiresAt: "2026-11-20"},
+	{Source: "team-a/app", Type: dto.TypeProjectAccessToken, ID: 4, Name: "today", ExpiresAt: "2026-11-25"},
+	{Source: "team-b", Type: dto.TypeGroupAccessToken, ID: 5, Name: "old", Revoked: true, ExpiresAt: "2025-01-01"},
+}
+
+// contractToken mirrors the documented JSON/YAML format of a token.
+type contractToken struct {
+	Source        string  `yaml:"source"`
+	Type          string  `yaml:"type"`
+	ID            int64   `yaml:"id"`
+	Name          string  `yaml:"name"`
+	Revoked       bool    `yaml:"revoked"`
+	ExpiresAt     *string `yaml:"expires_at"`
+	ExpiresInDays *int    `yaml:"expires_in_days"`
+}
+
+func render(t *testing.T, format string, printRevoked bool, now func() time.Time, tokens []dto.Token) string {
+	t.Helper()
 	var buf bytes.Buffer
-	r, err := views.NewStructuredOutput(views.FormatJSON, &buf, false)
+	r, err := views.NewStructuredOutput(format, &buf, printRevoked)
 	require.NoError(t, err)
+	views.SetNow(r, now)
+	require.NoError(t, r.Render(tokens))
+	return buf.String()
+}
 
-	require.NoError(t, r.Render(structuredTokens))
+func TestStructuredOutput_JSONContract(t *testing.T) {
+	out := render(t, views.FormatJSON, false, fixedNow, structuredTokens)
 
-	assert.JSONEq(t, `[{"source":"a/b","type":"access_token","id":1,"name":"gat","revoked":false,"expires_at":"2027-01-01"}]`,
-		buf.String())
+	assert.JSONEq(t, `[
+		{"source": "team-a", "type": "group_access_token", "id": 1, "name": "ci&deploy <prod>",
+		 "revoked": false, "expires_at": "2026-12-05", "expires_in_days": 10},
+		{"source": "team-a/app", "type": "project_access_token", "id": 2, "name": "forever",
+		 "revoked": false, "expires_at": null, "expires_in_days": null},
+		{"source": "team-a", "type": "group_deploy_token", "id": 3, "name": "expired",
+		 "revoked": false, "expires_at": "2026-11-20", "expires_in_days": -5},
+		{"source": "team-a/app", "type": "project_access_token", "id": 4, "name": "today",
+		 "revoked": false, "expires_at": "2026-11-25", "expires_in_days": 0}
+	]`, out)
+	assert.Contains(t, out, `"ci&deploy <prod>"`, "HTML characters must not be escaped")
 }
 
 func TestStructuredOutput_YAMLWithRevoked(t *testing.T) {
-	var buf bytes.Buffer
-	r, err := views.NewStructuredOutput(views.FormatYAML, &buf, true)
-	require.NoError(t, err)
+	out := render(t, views.FormatYAML, true, fixedNow, structuredTokens)
 
-	require.NoError(t, r.Render(structuredTokens))
+	var got []contractToken
+	require.NoError(t, yaml.Unmarshal([]byte(out), &got))
+	require.Len(t, got, len(structuredTokens))
+	assert.Equal(t, "old", got[4].Name)
+	assert.True(t, got[4].Revoked)
+	assert.Nil(t, got[1].ExpiresAt)
+	assert.Nil(t, got[1].ExpiresInDays)
+	require.NotNil(t, got[0].ExpiresInDays)
+	assert.Equal(t, 10, *got[0].ExpiresInDays)
+	assert.Contains(t, out, `expires_at: "2026-12-05"`, "dates must stay strings")
+	assert.Contains(t, out, "expires_at: null")
+}
 
-	var got []dto.Token
-	require.NoError(t, yaml.Unmarshal(buf.Bytes(), &got))
-	assert.Equal(t, structuredTokens, got)
-	assert.Contains(t, buf.String(), "expires_at: \"2027-01-01\"")
+func TestStructuredOutput_DaysCountedFromTodayInUTC(t *testing.T) {
+	// 23:30 in New York on 2026-11-25 is already 2026-11-26 in UTC.
+	lateEvening := func() time.Time {
+		return time.Date(2026, 11, 25, 23, 30, 0, 0, time.FixedZone("EST", -5*60*60))
+	}
+	out := render(t, views.FormatYAML, false, lateEvening, structuredTokens[:1])
+
+	var got []contractToken
+	require.NoError(t, yaml.Unmarshal([]byte(out), &got))
+	require.NotNil(t, got[0].ExpiresInDays)
+	assert.Equal(t, 9, *got[0].ExpiresInDays)
+}
+
+func TestStructuredOutput_InvalidDateHasNoDays(t *testing.T) {
+	out := render(t, views.FormatJSON, false, fixedNow, []dto.Token{{ID: 1, Name: "x", ExpiresAt: "someday"}})
+
+	assert.JSONEq(t, `[{"source": "", "type": "", "id": 1, "name": "x", "revoked": false,
+		"expires_at": "someday", "expires_in_days": null}]`, out)
 }
 
 func TestStructuredOutput_EmptyIsAnEmptyList(t *testing.T) {
-	var buf bytes.Buffer
-	r, err := views.NewStructuredOutput(views.FormatJSON, &buf, false)
-	require.NoError(t, err)
-
-	require.NoError(t, r.Render(nil))
-
-	var got []dto.Token
-	require.NoError(t, json.Unmarshal(buf.Bytes(), &got))
-	assert.NotNil(t, got)
-	assert.Empty(t, got)
-	assert.Equal(t, "[]\n", buf.String())
-
-	buf.Reset()
-	r, err = views.NewStructuredOutput(views.FormatYAML, &buf, false)
-	require.NoError(t, err)
-	require.NoError(t, r.Render(nil))
-	assert.Equal(t, "[]\n", buf.String())
+	assert.Equal(t, "[]\n", render(t, views.FormatJSON, false, fixedNow, nil))
+	assert.Equal(t, "[]\n", render(t, views.FormatYAML, false, fixedNow, nil))
 }
 
 func TestNewStructuredOutput_UnknownFormat(t *testing.T) {
 	_, err := views.NewStructuredOutput("xml", nil, false)
 	require.ErrorIs(t, err, views.ErrUnknownFormat)
+}
+
+func TestFormats(t *testing.T) {
+	assert.Equal(t, []string{"table", "json", "yaml"}, views.Formats())
 }

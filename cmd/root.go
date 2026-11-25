@@ -113,13 +113,14 @@ func newTokenFilter() (filter.TokenFilter, error) {
 // addOutputFlag adds the output format flag to cmd.
 func addOutputFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&outputFormat, "output", "o", views.FormatTable,
-		"Output format: "+strings.Join(views.Formats, ", "))
+		"Output format: "+strings.Join(views.Formats(), ", "))
 }
 
-// newRenderer returns the renderer selected by --output, configured from the
-// command-line flags.
+// newRenderer returns the renderer selected by --output (case-insensitive),
+// configured from the command-line flags.
 func newRenderer() (views.Renderer, error) { //nolint:ireturn // picks the renderer from --output
-	switch outputFormat {
+	format := strings.ToLower(outputFormat)
+	switch format {
 	case views.FormatTable:
 		return views.NewTableOutput(views.WithColorOption(!printNoColor),
 			views.WithHeaderOption(!printNoHeader),
@@ -127,9 +128,9 @@ func newRenderer() (views.Renderer, error) { //nolint:ireturn // picks the rende
 			views.WithNbDaysBeforeExp(nbDaysBeforeExp),
 		), nil
 	default:
-		r, err := views.NewStructuredOutput(outputFormat, os.Stdout, printRevoked)
+		r, err := views.NewStructuredOutput(format, os.Stdout, printRevoked)
 		if err != nil {
-			return nil, fmt.Errorf("--output: %w (expected one of %s)", err, strings.Join(views.Formats, ", "))
+			return nil, fmt.Errorf("--output: %w (expected one of %s)", err, strings.Join(views.Formats(), ", "))
 		}
 		return r, nil
 	}

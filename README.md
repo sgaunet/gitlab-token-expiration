@@ -34,8 +34,8 @@ $ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
 # Only the tokens of the groups under team-a, except the renovate ones
 $ gitlab-token-expiration group --filter-source '^team-a/' --exclude-name renovate
 
-# JSON or YAML output, for scripts
-$ gitlab-token-expiration project -o json | jq -r '.[] | select(.expires_at < "2027-01-01") | .name'
+# JSON or YAML output, for scripts: tokens expired or expiring within 30 days
+$ gitlab-token-expiration project -o json | jq -r '.[] | select(.expires_in_days != null and .expires_in_days <= 30) | .name'
 $ gitlab-token-expiration group -o yaml
 
 $ gitlab-token-expiration -h
@@ -120,7 +120,7 @@ gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 
 ### Output formats
 
-`-o, --output` selects the output format of `group`, `project` and `pat`:
+`-o, --output` selects the output format of `group`, `project` and `pat` (case-insensitive):
 
 | Format            | Description                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
@@ -128,11 +128,26 @@ gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 | `json`            | JSON list of tokens                                                         |
 | `yaml`            | YAML list of tokens                                                         |
 
-Each token has the fields `source`, `type`, `id`, `name`, `revoked` and `expires_at` (`YYYY-MM-DD`, empty when the token never expires). As with the table, revoked tokens are only included with `-r`, and `--filter-name` applies. Only the tokens are written on stdout (progress and warnings go to stderr), and an empty result is an empty list (`[]`), so the output can be piped to `jq` or `yq`.
+Each token of the JSON and YAML output has these fields:
+
+| Field             | Description                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| `source`          | Path of the group or project (empty for personal access tokens)             |
+| `type`            | `group_access_token`, `group_deploy_token`, `project_access_token`, `project_deploy_token` or `personal_access_token` |
+| `id`              | Token ID                                                                    |
+| `name`            | Token name                                                                  |
+| `revoked`         | `true` if the token is revoked                                              |
+| `expires_at`      | Expiration date (`YYYY-MM-DD`), `null` when the token never expires         |
+| `expires_in_days` | Days from today (UTC) to `expires_at`: `0` the day it expires, negative once expired, `null` when it never expires |
+
+As with the table, revoked tokens are only included with `-r`, and the `--filter-*`/`--exclude-*` filters apply. `-H`, `-C` and `-d` only affect the table. Only the tokens are written on stdout (progress and warnings, such as skipped groups or projects, go to stderr), and an empty result is an empty list (`[]`), so the output can be piped to `jq` or `yq`.
 
 ```bash
-# Names of the tokens expiring before 2027
-gitlab-token-expiration group -o json | jq -r '.[] | select(.expires_at != "" and .expires_at < "2027-01-01") | "\(.source) \(.name) \(.expires_at)"'
+# Tokens expired or expiring within 30 days
+gitlab-token-expiration group -o json | jq -r '.[] | select(.expires_in_days != null and .expires_in_days <= 30) | "\(.source) \(.name) \(.expires_at)"'
+
+# Project access tokens that never expire
+gitlab-token-expiration project -o json | jq -r '.[] | select(.type == "project_access_token" and .expires_at == null) | "\(.source) \(.name)"'
 ```
 
 ### Common flags
