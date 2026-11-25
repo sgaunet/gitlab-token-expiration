@@ -12,15 +12,78 @@
 
 This tool lists all sort of expirable tokens of gitlab projects, gitlab groups and the gitlab personal access token. The purpose of this tool is to give an overview of the expiration date of the tokens.
 
+## Features
+
+* **No ID needed**: `group` and `project` without `--id` discover by themselves every group and project whose tokens you can read, and list all their tokens in one table ([details](#listing-all-groups-and-projects)).
+* **Fast on large instances**: tokens are retrieved concurrently, tunable with `-p, --parallel` ([details](#parallelism)).
+* **Robust**: a group or project you are not allowed to read (`401`/`403`) is skipped with a warning instead of stopping the whole run.
+* **Complete**: every list call is paginated, and `group -i` goes down subgroups at any depth.
+
 ## Getting started
 
-Example:
-
-```yaml
-$ export GITLAB_TOKEN=yourtoken
+```bash
+$ export GITLAB_TOKEN=yourtoken  # needs at least the read_api scope
 # export GITLAB_URI=https://your-instance-of-gitlab.com  # optional if you are using another gitlab instance
+
+$ gitlab-token-expiration group         # all groups where you are Owner
+$ gitlab-token-expiration project       # all projects where you are at least Maintainer
+$ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
 $ gitlab-token-expiration -h
 ```
+
+## Usage
+
+```bash
+# Tokens of every group where you have the Owner role
+gitlab-token-expiration group
+
+# Tokens of every project where you have at least the Maintainer role
+gitlab-token-expiration project
+
+# Tokens of one group, of all its subgroups and of all their projects
+gitlab-token-expiration group -i 12345
+
+# Tokens of one group only (no subgroups, no projects)
+gitlab-token-expiration group -i 12345 --no-recursive
+
+# Tokens of one project
+gitlab-token-expiration project -i 678
+
+# Your personal access tokens
+gitlab-token-expiration pat
+```
+
+### Listing all groups and projects
+
+When `--id` is omitted, the tool discovers by itself the groups and projects whose tokens you are allowed to list:
+
+| Command   | Discovered resources                           | Listed tokens                         |
+|-----------|------------------------------------------------|---------------------------------------|
+| `group`   | groups where you have the **Owner** role       | group access tokens and deploy tokens |
+| `project` | projects where you have at least the **Maintainer** role | project access tokens       |
+
+These are the roles GitLab requires to list the tokens. `GITLAB_TOKEN` needs at least the `read_api` scope.
+
+When several groups or projects are processed (no `--id`, or `group -i` in recursive mode), a group or project for which GitLab denies access (`401` or `403`) is skipped: a warning is printed on stderr and the other ones are still processed. Any other error stops the command. With a single `--id`, an access denied error stops the command.
+
+### Parallelism
+
+Tokens of the groups and projects are retrieved concurrently. The `-p, --parallel` flag sets the maximum number of concurrent GitLab API calls (default: `5`). Lower it if your GitLab instance rate-limits you; requests answered with `429` are retried by the GitLab client.
+
+```bash
+gitlab-token-expiration group -p 10
+```
+
+### Common flags
+
+| Flag                                 | Description                                                    |
+|--------------------------------------|----------------------------------------------------------------|
+| `-i, --id`                           | Group or project ID (`group` and `project` only)               |
+| `-p, --parallel`                     | Maximum number of concurrent GitLab API calls (default `5`, `group` and `project` only) |
+| `-d, --days-before-expiration`       | Tokens expiring within this number of days are shown in yellow (default `60`) |
+| `-r, --revoked`                      | Also print revoked tokens                                      |
+| `-H, --no-header`                    | Do not print the table header                                  |
+| `-C, --no-color`                     | Do not print colors                                            |
 
 ## Development
 

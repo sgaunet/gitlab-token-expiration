@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/logger"
@@ -16,10 +17,14 @@ import (
 
 // App represents the application with GitLab client and configuration.
 type App struct {
-	gitlabClient  *gitlab.Client
-	printRevoked  bool
-	log           logger.Logger
-	view          views.Renderer
+	gitlabClient *gitlab.Client
+	printRevoked bool
+	parallel     int
+	skipDenied   bool
+	skippedMu    sync.Mutex
+	skipped      []SkippedResource
+	log          logger.Logger
+	view         views.Renderer
 }
 
 // Option is a function that configures the App.
@@ -41,6 +46,14 @@ func WithGitlabEndpoint(gitlabAPIEndpoint string) Option {
 func WithRevokedToken(printRevoked bool) Option {
 	return func(a *App) {
 		a.printRevoked = printRevoked
+	}
+}
+
+// WithParallel sets the maximum number of concurrent GitLab API calls
+// used to retrieve tokens. Values lower than 1 are treated as 1.
+func WithParallel(parallel int) Option {
+	return func(a *App) {
+		a.parallel = max(parallel, 1)
 	}
 }
 
@@ -67,6 +80,7 @@ func NewApp(v views.Renderer, opts ...Option) *App {
 	app := &App{
 		gitlabClient: client,
 		view:         v,
+		parallel:     DefaultParallel,
 		log:          slog.New(slog.DiscardHandler),
 	}
 	for _, opt := range opts {
@@ -109,56 +123,32 @@ func (a *App) SetHTTPClient(httpClient *http.Client) {
 	}
 }
 
-// GetTokensOfProjects returns the tokens of multiple projects.
-func (a *App) GetTokensOfProjects(_ context.Context, projects []*gitlab.Project) ([]dto.Token, error) {
-	var tokens []dto.Token
+// perPage is the page size used for paginated GitLab API calls (the maximum allowed).
+const perPage = 100
 
-	for _, project := range projects {
-		projectAccessTokens, _, err := a.gitlabClient.ProjectAccessTokens.ListProjectAccessTokens(project.ID, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list project access tokens for project %d: %w", project.ID, err)
-		}
-		dtoTokens := ConvertProjectAccessTokenToDTOTokens(projectAccessTokens)
-
-		// Add the source
-		for i := range dtoTokens {
-			dtoTokens[i].Source = project.PathWithNamespace
-		}
-		tokens = append(tokens, dtoTokens...)
-	}
-	return tokens, nil
+// listOptions returns the pagination options used for every list call.
+func listOptions() gitlab.ListOptions {
+	return gitlab.ListOptions{PerPage: perPage}
 }
 
-// GetTokensOfGroups returns the tokens of all groups.
-func (a *App) GetTokensOfGroups(_ context.Context, groups []*gitlab.Group) ([]dto.Token, error) {
-	var tokens []dto.Token
-
-	for _, group := range groups {
-		// Get access tokens of the group
-		groupAccessTokens, _, err := a.gitlabClient.GroupAccessTokens.ListGroupAccessTokens(group.ID, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list group access tokens for group %d: %w", group.ID, err)
-		}
-		dtoTokens := ConvertGroupAccessTokenToDTOTokens(groupAccessTokens)
-		// Add the source
-		for i := range dtoTokens {
-			dtoTokens[i].Source = group.Path
-		}
-		tokens = append(tokens, dtoTokens...)
-
-		// Get deploy tokens of the group
-		groupDeployTokens, _, err := a.gitlabClient.DeployTokens.ListGroupDeployTokens(group.ID, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list group deploy tokens for group %d: %w", group.ID, err)
-		}
-		dtoTokens = ConvertGroupDeployTokenToDTOTokens(groupDeployTokens)
-		// Add the source
-		for i := range dtoTokens {
-			dtoTokens[i].Source = group.Path
-		}
-		tokens = append(tokens, dtoTokens...)
+// GetTokensOfProjects returns the access tokens of the given projects.
+// Projects are processed concurrently, see WithParallel.
+func (a *App) GetTokensOfProjects(ctx context.Context, projects []*gitlab.Project) ([]dto.Token, error) {
+	parts, err := parallelMap(ctx, a.parallel, projects, a.getTokensOfProject)
+	if err != nil {
+		return nil, err
 	}
-	return tokens, nil
+	return flatten(parts), nil
+}
+
+// GetTokensOfGroups returns the access tokens and deploy tokens of the given groups.
+// Groups are processed concurrently, see WithParallel.
+func (a *App) GetTokensOfGroups(ctx context.Context, groups []*gitlab.Group) ([]dto.Token, error) {
+	parts, err := parallelMap(ctx, a.parallel, groups, a.getTokensOfGroup)
+	if err != nil {
+		return nil, err
+	}
+	return flatten(parts), nil
 }
 
 // GetProject returns the project that matches the given ID.
@@ -179,38 +169,69 @@ func (a *App) GetGroup(groupID int64) (*gitlab.Group, error) {
 	return group, nil
 }
 
-// GetSubGroups returns the subgroups of the group that matches the given ID.
-func (a *App) GetSubGroups(groupID int64) ([]*gitlab.Group, error) {
-	groups, _, err := a.gitlabClient.Groups.ListSubGroups(groupID, nil)
+// GetSubGroups returns all the descendant groups (subgroups at any depth)
+// of the group that matches the given ID.
+func (a *App) GetSubGroups(ctx context.Context, groupID int64) ([]*gitlab.Group, error) {
+	opts := &gitlab.ListDescendantGroupsOptions{ListOptions: listOptions()}
+	groups, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+			return a.gitlabClient.Groups.ListDescendantGroups(groupID, opts, p, gitlab.WithContext(ctx))
+		})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subgroups for group %d: %w", groupID, err)
 	}
 	return groups, nil
 }
 
-// GetRecursiveProjectsOfGroup returns the projects of the group that matches the given ID.
-func (a *App) GetRecursiveProjectsOfGroup(groupID int64) ([]*gitlab.Project, error) {
-	// Get projects of the group
-	projects, _, err := a.gitlabClient.Groups.ListGroupProjects(groupID, nil)
+// GetRecursiveProjectsOfGroup returns the projects of the group that matches
+// the given ID, including the projects of its subgroups at any depth.
+func (a *App) GetRecursiveProjectsOfGroup(ctx context.Context, groupID int64) ([]*gitlab.Project, error) {
+	opts := &gitlab.ListGroupProjectsOptions{
+		ListOptions:      listOptions(),
+		IncludeSubGroups: new(true),
+	}
+	projects, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.Project, *gitlab.Response, error) {
+			return a.gitlabClient.Groups.ListGroupProjects(groupID, opts, p, gitlab.WithContext(ctx))
+		})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list projects for group %d: %w", groupID, err)
 	}
+	return projects, nil
+}
 
-	// Get subgroups recursively
-	subgroups, err := a.GetSubGroups(groupID)
+// GetAllGroups returns every group where the current user has the Owner role,
+// which is the role required to list group access tokens and deploy tokens.
+func (a *App) GetAllGroups(ctx context.Context) ([]*gitlab.Group, error) {
+	opts := &gitlab.ListGroupsOptions{
+		ListOptions:    listOptions(),
+		MinAccessLevel: gitlab.Ptr(gitlab.OwnerPermissions),
+	}
+	groups, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.Group, *gitlab.Response, error) {
+			return a.gitlabClient.Groups.ListGroups(opts, p, gitlab.WithContext(ctx))
+		})
 	if err != nil {
-		return projects, err // Return what we have so far
+		return nil, fmt.Errorf("failed to list groups: %w", err)
 	}
+	return groups, nil
+}
 
-	// Get projects from each subgroup recursively
-	for _, subgroup := range subgroups {
-		subProjects, err := a.GetRecursiveProjectsOfGroup(subgroup.ID)
-		if err != nil {
-			continue // Skip this subgroup on error
-		}
-		projects = append(projects, subProjects...)
+// GetAllProjects returns every project where the current user has at least the
+// Maintainer role, which is the role required to list project access tokens.
+func (a *App) GetAllProjects(ctx context.Context) ([]*gitlab.Project, error) {
+	opts := &gitlab.ListProjectsOptions{
+		ListOptions:    listOptions(),
+		MinAccessLevel: gitlab.Ptr(gitlab.MaintainerPermissions),
+		Simple:         new(true),
 	}
-
+	projects, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.Project, *gitlab.Response, error) {
+			return a.gitlabClient.Projects.ListProjects(opts, p, gitlab.WithContext(ctx))
+		})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list projects: %w", err)
+	}
 	return projects, nil
 }
 
@@ -223,4 +244,56 @@ func (a *App) GetPersonalAccessTokens(_ context.Context) ([]dto.Token, error) {
 
 	res := ConvertPersonalGitlabTokenToDTOTokens(tokens)
 	return res, nil
+}
+
+func (a *App) getTokensOfProject(ctx context.Context, project *gitlab.Project) ([]dto.Token, error) {
+	opts := &gitlab.ListProjectAccessTokensOptions{ListOptions: listOptions()}
+	projectAccessTokens, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+			return a.gitlabClient.ProjectAccessTokens.ListProjectAccessTokens(project.ID, opts, p, gitlab.WithContext(ctx))
+		})
+	if err != nil {
+		if a.skipIfDenied("project", project.PathWithNamespace, err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list project access tokens for project %d: %w", project.ID, err)
+	}
+	tokens := ConvertProjectAccessTokenToDTOTokens(projectAccessTokens)
+	for i := range tokens {
+		tokens[i].Source = project.PathWithNamespace
+	}
+	return tokens, nil
+}
+
+func (a *App) getTokensOfGroup(ctx context.Context, group *gitlab.Group) ([]dto.Token, error) {
+	gatOpts := &gitlab.ListGroupAccessTokensOptions{ListOptions: listOptions()}
+	groupAccessTokens, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.GroupAccessToken, *gitlab.Response, error) {
+			return a.gitlabClient.GroupAccessTokens.ListGroupAccessTokens(group.ID, gatOpts, p, gitlab.WithContext(ctx))
+		})
+	if err != nil {
+		if a.skipIfDenied("group", group.FullPath, err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list group access tokens for group %d: %w", group.ID, err)
+	}
+
+	deployOpts := &gitlab.ListGroupDeployTokensOptions{ListOptions: listOptions()}
+	groupDeployTokens, err := gitlab.ScanAndCollect(
+		func(p gitlab.PaginationOptionFunc) ([]*gitlab.DeployToken, *gitlab.Response, error) {
+			return a.gitlabClient.DeployTokens.ListGroupDeployTokens(group.ID, deployOpts, p, gitlab.WithContext(ctx))
+		})
+	if err != nil {
+		if a.skipIfDenied("group", group.FullPath, err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list group deploy tokens for group %d: %w", group.ID, err)
+	}
+
+	tokens := ConvertGroupAccessTokenToDTOTokens(groupAccessTokens)
+	tokens = append(tokens, ConvertGroupDeployTokenToDTOTokens(groupDeployTokens)...)
+	for i := range tokens {
+		tokens[i].Source = group.FullPath
+	}
+	return tokens, nil
 }
