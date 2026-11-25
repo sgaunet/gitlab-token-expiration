@@ -12,13 +12,22 @@
 
 This tool lists all sort of expirable tokens of gitlab projects, gitlab groups and the gitlab personal access token. The purpose of this tool is to give an overview of the expiration date of the tokens.
 
+## Features
+
+* **No ID needed**: `group` and `project` without `--id` discover by themselves every group and project whose tokens you can read, and list all their tokens in one table ([details](#listing-all-groups-and-projects)).
+* **Fast on large instances**: tokens are retrieved concurrently, tunable with `-p, --parallel` ([details](#parallelism)).
+* **Robust**: a group or project you are not allowed to read (`401`/`403`) is skipped with a warning instead of stopping the whole run.
+* **Complete**: every list call is paginated, and `group -i` goes down subgroups at any depth.
+
 ## Getting started
 
-Example:
-
-```yaml
-$ export GITLAB_TOKEN=yourtoken
+```bash
+$ export GITLAB_TOKEN=yourtoken  # needs at least the read_api scope
 # export GITLAB_URI=https://your-instance-of-gitlab.com  # optional if you are using another gitlab instance
+
+$ gitlab-token-expiration group         # all groups where you are Owner
+$ gitlab-token-expiration project       # all projects where you are at least Maintainer
+$ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
 $ gitlab-token-expiration -h
 ```
 
