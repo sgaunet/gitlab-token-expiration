@@ -4,10 +4,10 @@ package dto
 // Token represents a Gitlab token (pat, deploy_token, access_token)
 // some fields are omitted.
 type Token struct {
-	Source    string `json:"source"` // project or group or personal
-	Type      string `json:"type"`   // pat or deploy_token or access_token
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Revoked   bool   `json:"revoked"`
-	ExpiresAt string `json:"expires_at"`
+	Source    string `json:"source"     yaml:"source"` // project or group or personal
+	Type      string `json:"type"       yaml:"type"`   // pat or deploy_token or access_token
+	ID        int64  `json:"id"         yaml:"id"`
+	Name      string `json:"name"       yaml:"name"`
+	Revoked   bool   `json:"revoked"    yaml:"revoked"`
+	ExpiresAt string `json:"expires_at" yaml:"expires_at"`
 }

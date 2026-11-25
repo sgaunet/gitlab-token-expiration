@@ -20,7 +20,11 @@ var patCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		v := newTableOutput()
+		v, err := newRenderer()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
 
 		// l := initTrace(os.Getenv("DEBUGLEVEL"))
