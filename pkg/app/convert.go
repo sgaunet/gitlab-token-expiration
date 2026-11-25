@@ -23,7 +23,7 @@ func ConvertGroupAccessTokenToDTOToken(groupAccessToken *gitlab.GroupAccessToken
 		ExpiresAt: expiresAt,
 		Revoked:   groupAccessToken.Revoked,
 		Source:    "group",
-		Type:      "access_token",
+		Type:      dto.TypeGroupAccessToken,
 	}
 }
 
@@ -41,7 +41,7 @@ func ConvertGroupDeployTokenToDTOToken(groupDeployToken *gitlab.DeployToken) dto
 		ExpiresAt: expiresAt,
 		Revoked:   groupDeployToken.Revoked,
 		Source:    "group",
-		Type:      "deploy_token",
+		Type:      dto.TypeGroupDeployToken,
 	}
 }
 
@@ -63,7 +63,7 @@ func ConvertProjectAccessTokenToDTOToken(projectAccessToken *gitlab.ProjectAcces
 		ExpiresAt: expiresAt,
 		Revoked:   projectAccessToken.Revoked,
 		Source:    "project",
-		Type:      "access_token",
+		Type:      dto.TypeProjectAccessToken,
 	}
 }
 
@@ -81,7 +81,7 @@ func ConvertProjectDeployTokenToDTOToken(projectDeployToken *gitlab.DeployToken)
 		ExpiresAt: expiresAt,
 		Revoked:   projectDeployToken.Revoked,
 		Source:    "project",
-		Type:      "deploy_token",
+		Type:      dto.TypeProjectDeployToken,
 	}
 }
 
@@ -103,7 +103,7 @@ func ConvertPersonalGitlabTokenToDTOToken(personalGitlabToken *gitlab.PersonalAc
 		ExpiresAt: expiresAt,
 		Revoked:   personalGitlabToken.Revoked,
 		Source:    "",
-		Type:      "personal_access_token",
+		Type:      dto.TypePersonalAccessToken,
 	}
 }
 

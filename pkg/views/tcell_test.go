@@ -196,7 +196,7 @@ func TestTableOutput_ComplexScenario(t *testing.T) {
 		{
 			ID:        1,
 			Source:    "group/admin",
-			Type:      "deploy_token",
+			Type:      dto.TypeGroupDeployToken,
 			Name:      "production-deploy",
 			Revoked:   false,
 			ExpiresAt: "2025-12-31",
@@ -204,7 +204,7 @@ func TestTableOutput_ComplexScenario(t *testing.T) {
 		{
 			ID:        2,
 			Source:    "project/backend",
-			Type:      "access_token",
+			Type:      dto.TypeProjectAccessToken,
 			Name:      "ci-token",
 			Revoked:   true,
 			ExpiresAt: "2024-06-30",

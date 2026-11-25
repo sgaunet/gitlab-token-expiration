@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/filter"
@@ -26,6 +27,7 @@ var excludeName string    // Hide the tokens whose name matches this regular exp
 var filterSource string   // Keep the tokens whose source matches this regular expression
 var excludeSource string  // Hide the tokens whose source matches this regular expression
 var filterIgnoreCase bool // Case-insensitive match for every filter pattern
+var outputFormat string   // table, json or yaml
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
@@ -108,13 +110,30 @@ func newTokenFilter() (filter.TokenFilter, error) {
 	return f, nil
 }
 
-// newTableOutput returns the table renderer configured from the command-line flags.
-func newTableOutput() views.TableOutput {
-	return views.NewTableOutput(views.WithColorOption(!printNoColor),
-		views.WithHeaderOption(!printNoHeader),
-		views.WithPrintRevokedOption(printRevoked),
-		views.WithNbDaysBeforeExp(nbDaysBeforeExp),
-	)
+// addOutputFlag adds the output format flag to cmd.
+func addOutputFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&outputFormat, "output", "o", views.FormatTable,
+		"Output format: "+strings.Join(views.Formats(), ", "))
+}
+
+// newRenderer returns the renderer selected by --output (case-insensitive),
+// configured from the command-line flags.
+func newRenderer() (views.Renderer, error) { //nolint:ireturn // picks the renderer from --output
+	format := strings.ToLower(outputFormat)
+	switch format {
+	case views.FormatTable:
+		return views.NewTableOutput(views.WithColorOption(!printNoColor),
+			views.WithHeaderOption(!printNoHeader),
+			views.WithPrintRevokedOption(printRevoked),
+			views.WithNbDaysBeforeExp(nbDaysBeforeExp),
+		), nil
+	default:
+		r, err := views.NewStructuredOutput(format, os.Stdout, printRevoked)
+		if err != nil {
+			return nil, fmt.Errorf("--output: %w (expected one of %s)", err, strings.Join(views.Formats(), ", "))
+		}
+		return r, nil
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -140,6 +159,7 @@ func init() {
 	groupCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
 	addFilterFlags(groupCmd, true)
+	addOutputFlag(groupCmd)
 	rootCmd.AddCommand(groupCmd)
 
 	projectCmd.Flags().Int64VarP(&gitlabID, "id", "i", 0,
@@ -152,6 +172,7 @@ func init() {
 	projectCmd.Flags().IntVarP(&parallel, "parallel", "p", app.DefaultParallel,
 		"Maximum number of concurrent GitLab API calls")
 	addFilterFlags(projectCmd, true)
+	addOutputFlag(projectCmd)
 	rootCmd.AddCommand(projectCmd)
 
 	patCmd.Flags().BoolVarP(&printRevoked, "revoked", "r", false, "Print revoked tokens")
@@ -160,5 +181,6 @@ func init() {
 	patCmd.Flags().UintVarP(&nbDaysBeforeExp, "days-before-expiration", "d", DefaultNbDaysBeforeExp,
 		"Number of days before expiration date to display it in yellow")
 	addFilterFlags(patCmd, false)
+	addOutputFlag(patCmd)
 	rootCmd.AddCommand(patCmd)
 }

@@ -19,6 +19,7 @@ This tool lists all sort of expirable tokens of gitlab projects, gitlab groups a
 * **Robust**: a group or project you are not allowed to read (`401`/`403`) is skipped with a warning instead of stopping the whole run.
 * **Complete**: every list call is paginated, and `group -i` goes down subgroups at any depth.
 * **Filter tokens**: keep or hide tokens by name or by source (group or project path) with regular expressions: `--filter-name`, `--exclude-name`, `--filter-source`, `--exclude-source`, `--ignore-case` ([details](#filtering-tokens)).
+* **Script friendly**: `-o, --output json|yaml` prints the tokens as JSON or YAML instead of the table ([details](#output-formats)).
 
 ## Getting started
 
@@ -32,6 +33,10 @@ $ gitlab-token-expiration group -p 10   # same, with 10 concurrent API calls
 
 # Only the tokens of the groups under team-a, except the renovate ones
 $ gitlab-token-expiration group --filter-source '^team-a/' --exclude-name renovate
+
+# JSON or YAML output, for scripts: tokens expired or expiring within 30 days
+$ gitlab-token-expiration project -o json | jq -r '.[] | select(.expires_in_days != null and .expires_in_days <= 30) | .name'
+$ gitlab-token-expiration group -o yaml
 
 $ gitlab-token-expiration -h
 ```
@@ -113,6 +118,38 @@ gitlab-token-expiration group --exclude-source '(^|/)sandbox(/|$)'
 gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 ```
 
+### Output formats
+
+`-o, --output` selects the output format of `group`, `project` and `pat` (case-insensitive):
+
+| Format            | Description                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| `table` (default) | Colored table for humans                                                    |
+| `json`            | JSON list of tokens                                                         |
+| `yaml`            | YAML list of tokens                                                         |
+
+Each token of the JSON and YAML output has these fields:
+
+| Field             | Description                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| `source`          | Path of the group or project (empty for personal access tokens)             |
+| `type`            | `group_access_token`, `group_deploy_token`, `project_access_token`, `project_deploy_token` or `personal_access_token` |
+| `id`              | Token ID                                                                    |
+| `name`            | Token name                                                                  |
+| `revoked`         | `true` if the token is revoked                                              |
+| `expires_at`      | Expiration date (`YYYY-MM-DD`), `null` when the token never expires         |
+| `expires_in_days` | Days from today (UTC) to `expires_at`: `0` the day it expires, negative once expired, `null` when it never expires |
+
+As with the table, revoked tokens are only included with `-r`, and the `--filter-*`/`--exclude-*` filters apply. `-H`, `-C` and `-d` only affect the table. Only the tokens are written on stdout (progress and warnings, such as skipped groups or projects, go to stderr), and an empty result is an empty list (`[]`), so the output can be piped to `jq` or `yq`.
+
+```bash
+# Tokens expired or expiring within 30 days
+gitlab-token-expiration group -o json | jq -r '.[] | select(.expires_in_days != null and .expires_in_days <= 30) | "\(.source) \(.name) \(.expires_at)"'
+
+# Project access tokens that never expire
+gitlab-token-expiration project -o json | jq -r '.[] | select(.type == "project_access_token" and .expires_at == null) | "\(.source) \(.name)"'
+```
+
 ### Common flags
 
 | Flag                                 | Description                                                    |
@@ -123,6 +160,7 @@ gitlab-token-expiration project --filter-name '(^|-)ci(-|$)' --ignore-case
 | `--filter-name`, `--exclude-name`    | Only show / hide tokens whose name matches a regular expression ([details](#filtering-tokens)) |
 | `--filter-source`, `--exclude-source` | Only show / hide tokens whose source matches a regular expression (`group` and `project` only) |
 | `--ignore-case`                      | Case-insensitive match for every filter pattern                |
+| `-o, --output`                       | Output format: `table` (default), `json` or `yaml`             |
 | `-r, --revoked`                      | Also print revoked tokens                                      |
 | `-H, --no-header`                    | Do not print the table header                                  |
 | `-C, --no-color`                     | Do not print colors                                            |

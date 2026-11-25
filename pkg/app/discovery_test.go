@@ -110,10 +110,10 @@ func TestApp_GetTokensOfGroups_AllGroupsInOrder(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, []dto.Token{
-		{Source: "a", Type: "access_token", ID: 11, Name: "gat-a", ExpiresAt: "2027-01-01"},
-		{Source: "a/b", Type: "access_token", ID: 21, Name: "gat-b"},
-		{Source: "a/b", Type: "access_token", ID: 23, Name: "gat-b-page2"},
-		{Source: "a/b", Type: "deploy_token", ID: 22, Name: "deploy-b", ExpiresAt: "2027-02-01"},
+		{Source: "a", Type: dto.TypeGroupAccessToken, ID: 11, Name: "gat-a", ExpiresAt: "2027-01-01"},
+		{Source: "a/b", Type: dto.TypeGroupAccessToken, ID: 21, Name: "gat-b"},
+		{Source: "a/b", Type: dto.TypeGroupAccessToken, ID: 23, Name: "gat-b-page2"},
+		{Source: "a/b", Type: dto.TypeGroupDeployToken, ID: 22, Name: "deploy-b", ExpiresAt: "2027-02-01"},
 	}, tokens)
 }
 
@@ -152,7 +152,7 @@ func TestApp_SkipDenied_SkipsUnauthorizedAndForbidden(t *testing.T) {
 	tokens, err := a.GetTokensOfGroups(context.Background(), groups)
 
 	require.NoError(t, err)
-	assert.Equal(t, []dto.Token{{Source: "a", Type: "access_token", ID: 11, Name: "gat-a"}}, tokens)
+	assert.Equal(t, []dto.Token{{Source: "a", Type: dto.TypeGroupAccessToken, ID: 11, Name: "gat-a"}}, tokens)
 	skipped := a.Skipped()
 	require.Len(t, skipped, 2)
 	assert.Equal(t, "group", skipped[0].Kind)

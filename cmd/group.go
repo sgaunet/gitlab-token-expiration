@@ -32,7 +32,11 @@ Without --id, list the tokens of every group where you have the Owner role
 			fmt.Fprintln(os.Stderr, err.Error())
 			os.Exit(1)
 		}
-		v := newTableOutput()
+		v, err := newRenderer()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 		// When several groups are processed, skip those whose tokens cannot be read
 		// instead of failing the whole run.
 		multipleGroups := gitlabID == 0 || !noRecursiveOption
