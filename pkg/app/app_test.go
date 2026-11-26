@@ -5,61 +5,55 @@ import (
 	"testing"
 
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
-	"github.com/sgaunet/gitlab-token-expiration/pkg/views"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// MockRenderer implements the views.Renderer interface for testing
-type MockRenderer struct {
-	RenderCalled bool
-	RenderTokens []dto.Token
-	RenderError  error
-}
-
-func (m *MockRenderer) Render(tokens []dto.Token) error {
-	m.RenderCalled = true
-	m.RenderTokens = tokens
-	return m.RenderError
-}
-
 func TestNewApp(t *testing.T) {
-	mockRenderer := &MockRenderer{}
-	
+	t.Setenv("GITLAB_URI", "")
+
 	tests := []struct {
-		name     string
-		renderer views.Renderer
-		opts     []app.Option
+		name string
+		opts []app.Option
 	}{
+		{name: "basic app creation", opts: nil},
+		{name: "app with parallel option", opts: []app.Option{app.WithParallel(3)}},
 		{
-			name:     "basic app creation",
-			renderer: mockRenderer,
-			opts:     nil,
-		},
-		{
-			name:     "app with revoked tokens option",
-			renderer: mockRenderer,
-			opts:     []app.Option{app.WithRevokedToken(true)},
-		},
-		{
-			name:     "app with gitlab endpoint option",
-			renderer: mockRenderer,
-			opts:     []app.Option{app.WithGitlabEndpoint("https://gitlab.example.com")},
+			name: "app with gitlab endpoint option",
+			opts: []app.Option{app.WithGitlabEndpoint("https://gitlab.example.com")},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			application := app.NewApp(tt.renderer, tt.opts...)
+			application, err := app.NewApp(tt.opts...)
+			require.NoError(t, err)
 			assert.NotNil(t, application)
 		})
 	}
 }
 
+func TestNewApp_InvalidGitlabURI(t *testing.T) {
+	t.Setenv("GITLAB_URI", "http://[::1")
+
+	application, err := app.NewApp()
+
+	require.Error(t, err)
+	assert.Nil(t, application)
+	assert.Contains(t, err.Error(), `invalid GITLAB_URI "http://[::1"`)
+}
+
+func newApp(t *testing.T) *app.App {
+	t.Helper()
+	t.Setenv("GITLAB_URI", "")
+	application, err := app.NewApp()
+	require.NoError(t, err)
+	return application
+}
+
 func TestApp_SetToken(t *testing.T) {
-	mockRenderer := &MockRenderer{}
-	application := app.NewApp(mockRenderer)
-	
+	application := newApp(t)
+
 	// Test setting a token
 	application.SetToken("test-token-123")
 	// Since we can't directly test the internal client, we just ensure no panic
@@ -67,9 +61,8 @@ func TestApp_SetToken(t *testing.T) {
 }
 
 func TestApp_SetGitlabEndpoint(t *testing.T) {
-	mockRenderer := &MockRenderer{}
-	application := app.NewApp(mockRenderer)
-	
+	application := newApp(t)
+
 	// Test setting an endpoint
 	application.SetGitlabEndpoint("https://gitlab.example.com")
 	// Since we can't directly test the internal client, we just ensure no panic
@@ -77,33 +70,11 @@ func TestApp_SetGitlabEndpoint(t *testing.T) {
 }
 
 func TestApp_SetHTTPClient(t *testing.T) {
-	mockRenderer := &MockRenderer{}
-	application := app.NewApp(mockRenderer)
-	
+	application := newApp(t)
+
 	// Test setting an HTTP client
 	httpClient := &http.Client{}
 	application.SetHTTPClient(httpClient)
 	// Since we can't directly test the internal client, we just ensure no panic
 	assert.NotNil(t, application)
-}
-
-// Note: The following tests would require mocking the GitLab client, which is not easily 
-// achievable in a black box test. In a real scenario, you might want to:
-// 1. Create an interface for GitLab operations
-// 2. Use dependency injection to inject a mock implementation
-// 3. Or use integration tests with a test GitLab instance
-
-func TestApp_GetTokensOfProjects_ErrorHandling(t *testing.T) {
-	// This test demonstrates the API but would need proper mocking to work
-	t.Skip("Requires GitLab client mocking or integration test setup")
-}
-
-func TestApp_GetTokensOfGroups_ErrorHandling(t *testing.T) {
-	// This test demonstrates the API but would need proper mocking to work
-	t.Skip("Requires GitLab client mocking or integration test setup")
-}
-
-func TestApp_GetPersonalAccessTokens_ErrorHandling(t *testing.T) {
-	// This test demonstrates the API but would need proper mocking to work
-	t.Skip("Requires GitLab client mocking or integration test setup")
 }

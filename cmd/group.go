@@ -4,9 +4,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/pterm/pterm"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
 	"github.com/sgaunet/gitlab-token-expiration/pkg/dto"
 	"github.com/spf13/cobra"
@@ -25,27 +23,22 @@ With --id, list the tokens of that group and, unless --no-recursive is set,
 of all its subgroups and projects.
 
 Without --id, list the tokens of every group where you have the Owner role
-(the role GitLab requires to list group tokens).`,
-	Run: func(_ *cobra.Command, _ []string) {
-		tokenFilter, err := newTokenFilter()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+(the role GitLab requires to list group access tokens). Their subgroups and
+projects are not included: use the project command for project tokens.`,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		cmd.SilenceUsage = true
+		if noRecursiveOption && gitlabID == 0 {
+			return errNoRecursiveWithoutID
 		}
-		v, err := newRenderer()
+		out, err := prepare()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+			return err
 		}
-		// When several groups are processed, skip those whose tokens cannot be read
-		// instead of failing the whole run.
-		multipleGroups := gitlabID == 0 || !noRecursiveOption
-		a := app.NewApp(v,
-			app.WithRevokedToken(printRevoked),
-			app.WithParallel(parallel),
-			app.WithSkipDenied(multipleGroups),
-		)
-		ctx := context.Background()
+		a, err := newApp()
+		if err != nil {
+			return err
+		}
+		ctx := cmd.Context()
 
 		var tokens []dto.Token
 		switch {
@@ -57,21 +50,15 @@ Without --id, list the tokens of every group where you have the Owner role
 			tokens, err = tokensOfGroupRecursive(ctx, a)
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+			return err
 		}
-		printSkipped(a)
-		tokens = tokenFilter.Apply(tokens)
-		if err := v.Render(tokens); err != nil {
-			fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
-			os.Exit(1)
-		}
+		return out.render(a, tokens)
 	},
 }
 
 // tokensOfAllGroups lists the tokens of every group the user owns.
 func tokensOfAllGroups(ctx context.Context, a *app.App) ([]dto.Token, error) {
-	spinner, _ := pterm.DefaultSpinner.Start("Retrieve all groups where you are Owner")
+	spinner := startProgress("Retrieve all groups where you are Owner")
 	groups, err := a.GetAllGroups(ctx)
 	if err != nil {
 		spinner.Fail("Error while retrieving groups")
@@ -79,7 +66,7 @@ func tokensOfAllGroups(ctx context.Context, a *app.App) ([]dto.Token, error) {
 	}
 	spinner.Success(fmt.Sprintf("%d groups retrieved", len(groups)))
 
-	spinner, _ = pterm.DefaultSpinner.Start("Retrieve tokens of all groups")
+	spinner = startProgress("Retrieve tokens of all groups")
 	tokens, err := a.GetTokensOfGroups(ctx, groups)
 	if err != nil {
 		spinner.Fail("Error while retrieving tokens of groups")
@@ -91,7 +78,7 @@ func tokensOfAllGroups(ctx context.Context, a *app.App) ([]dto.Token, error) {
 
 // tokensOfGroup lists the tokens of the group given by --id only.
 func tokensOfGroup(ctx context.Context, a *app.App) ([]dto.Token, error) {
-	group, err := a.GetGroup(gitlabID)
+	group, err := a.GetGroup(ctx, gitlabID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving group: %w", err)
 	}
@@ -105,9 +92,9 @@ func tokensOfGroup(ctx context.Context, a *app.App) ([]dto.Token, error) {
 // tokensOfGroupRecursive lists the tokens of the group given by --id,
 // of all its subgroups and of all their projects.
 func tokensOfGroupRecursive(ctx context.Context, a *app.App) ([]dto.Token, error) {
-	spinner, _ := pterm.DefaultSpinner.Start("Retrieve informations of all subgroups and projects")
+	spinner := startProgress("Retrieve informations of all subgroups and projects")
 
-	actualGroup, err := a.GetGroup(gitlabID)
+	actualGroup, err := a.GetGroup(ctx, gitlabID)
 	if err != nil {
 		spinner.Fail("Error while retrieving group informations")
 		return nil, fmt.Errorf("retrieving group: %w", err)
@@ -126,7 +113,7 @@ func tokensOfGroupRecursive(ctx context.Context, a *app.App) ([]dto.Token, error
 	}
 	spinner.Success("Groups and projects retrieved")
 
-	spinner, _ = pterm.DefaultSpinner.Start("Retrieve tokens of all subgroups and projects")
+	spinner = startProgress("Retrieve tokens of all subgroups and projects")
 	tokens, err := a.GetTokensOfGroups(ctx, groups)
 	if err != nil {
 		spinner.Fail("Error while retrieving tokens of groups")

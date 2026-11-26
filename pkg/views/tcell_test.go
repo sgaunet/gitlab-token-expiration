@@ -29,10 +29,6 @@ func TestNewTableOutput(t *testing.T) {
 			opts: []views.TableOutputOption{views.WithColorOption(true)},
 		},
 		{
-			name: "with print revoked option",
-			opts: []views.TableOutputOption{views.WithPrintRevokedOption(true)},
-		},
-		{
 			name: "with days before expiration",
 			opts: []views.TableOutputOption{views.WithNbDaysBeforeExp(30)},
 		},
@@ -41,7 +37,6 @@ func TestNewTableOutput(t *testing.T) {
 			opts: []views.TableOutputOption{
 				views.WithHeaderOption(true),
 				views.WithColorOption(true),
-				views.WithPrintRevokedOption(true),
 				views.WithNbDaysBeforeExp(30),
 			},
 		},
@@ -90,26 +85,8 @@ func TestTableOutput_Render(t *testing.T) {
 			},
 		},
 		{
-			name:  "filter revoked tokens when printRevoked is false",
-			table: views.NewTableOutput(views.WithPrintRevokedOption(false)),
-			tokens: []dto.Token{
-				{
-					ID:        1,
-					Name:      "active-token",
-					Revoked:   false,
-					ExpiresAt: "2025-12-31",
-				},
-				{
-					ID:        2,
-					Name:      "revoked-token",
-					Revoked:   true,
-					ExpiresAt: "2025-12-31",
-				},
-			},
-		},
-		{
-			name:  "show revoked tokens when printRevoked is true",
-			table: views.NewTableOutput(views.WithPrintRevokedOption(true)),
+			name:  "render revoked tokens",
+			table: views.NewTableOutput(),
 			tokens: []dto.Token{
 				{
 					ID:        1,
@@ -190,7 +167,6 @@ func TestTableOutput_ComplexScenario(t *testing.T) {
 	table := views.NewTableOutput(
 		views.WithHeaderOption(true),
 		views.WithColorOption(false), // Disable color for predictable output
-		views.WithPrintRevokedOption(true),
 		views.WithNbDaysBeforeExp(30),
 	)
 

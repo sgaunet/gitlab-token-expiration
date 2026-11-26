@@ -16,7 +16,6 @@ import (
 type TableOutput struct {
 	HeaderOption    bool
 	ColorOption     bool
-	printRevoked    bool
 	nbDaysBeforeExp uint
 }
 
@@ -37,13 +36,6 @@ func WithColorOption(colorOption bool) TableOutputOption {
 	}
 }
 
-// WithPrintRevokedOption configures whether to display revoked tokens.
-func WithPrintRevokedOption(printRevoked bool) TableOutputOption {
-	return func(t *TableOutput) {
-		t.printRevoked = printRevoked
-	}
-}
-
 // WithNbDaysBeforeExp configures the number of days before expiration to highlight.
 func WithNbDaysBeforeExp(nbDaysBeforeExp uint) TableOutputOption {
 	return func(t *TableOutput) {
@@ -60,16 +52,13 @@ func NewTableOutput(opts ...TableOutputOption) TableOutput {
 	return t
 }
 
-// Render displays the tokens in a table format.
+// Render displays every given token in a table format.
 func (t TableOutput) Render(tokens []dto.Token) error {
 	tData := pterm.TableData{}
 	if t.HeaderOption {
 		tData = append(tData, []string{"ID", "Source", "Type", "Name", "Revoked", "Expires at"})
 	}
 	for _, token := range tokens {
-		if !t.printRevoked && token.Revoked {
-			continue
-		}
 		tData = append(tData, []string{strconv.FormatInt(token.ID, 10),
 			token.Source, token.Type, token.Name,
 			t.prettyPrintBool(token.Revoked, true),

@@ -12,7 +12,7 @@ import (
 
 func TestConvertGroupAccessTokenToDTOToken(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    *gitlab.GroupAccessToken
@@ -47,7 +47,7 @@ func TestConvertGroupAccessTokenToDTOToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := app.ConvertGroupAccessTokenToDTOToken(tt.input)
-			
+
 			assert.Equal(t, tt.input.ID, result.ID)
 			assert.Equal(t, tt.input.Name, result.Name)
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
@@ -60,7 +60,7 @@ func TestConvertGroupAccessTokenToDTOToken(t *testing.T) {
 
 func TestConvertGroupDeployTokenToDTOToken(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    *gitlab.DeployToken
@@ -91,7 +91,7 @@ func TestConvertGroupDeployTokenToDTOToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := app.ConvertGroupDeployTokenToDTOToken(tt.input)
-			
+
 			assert.Equal(t, tt.input.ID, result.ID)
 			assert.Equal(t, tt.input.Name, result.Name)
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
@@ -104,7 +104,7 @@ func TestConvertGroupDeployTokenToDTOToken(t *testing.T) {
 
 func TestConvertProjectAccessTokenToDTOToken(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    *gitlab.ProjectAccessToken
@@ -139,7 +139,7 @@ func TestConvertProjectAccessTokenToDTOToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := app.ConvertProjectAccessTokenToDTOToken(tt.input)
-			
+
 			assert.Equal(t, tt.input.ID, result.ID)
 			assert.Equal(t, tt.input.Name, result.Name)
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
@@ -152,7 +152,7 @@ func TestConvertProjectAccessTokenToDTOToken(t *testing.T) {
 
 func TestConvertProjectDeployTokenToDTOToken(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    *gitlab.DeployToken
@@ -183,7 +183,7 @@ func TestConvertProjectDeployTokenToDTOToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := app.ConvertProjectDeployTokenToDTOToken(tt.input)
-			
+
 			assert.Equal(t, tt.input.ID, result.ID)
 			assert.Equal(t, tt.input.Name, result.Name)
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
@@ -196,7 +196,7 @@ func TestConvertProjectDeployTokenToDTOToken(t *testing.T) {
 
 func TestConvertPersonalGitlabTokenToDTOToken(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    *gitlab.PersonalAccessToken
@@ -227,7 +227,7 @@ func TestConvertPersonalGitlabTokenToDTOToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := app.ConvertPersonalGitlabTokenToDTOToken(tt.input)
-			
+
 			assert.Equal(t, tt.input.ID, result.ID)
 			assert.Equal(t, tt.input.Name, result.Name)
 			assert.Equal(t, tt.input.Revoked, result.Revoked)
@@ -240,7 +240,7 @@ func TestConvertPersonalGitlabTokenToDTOToken(t *testing.T) {
 
 func TestConvertGroupAccessTokenToDTOTokens(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	input := []*gitlab.GroupAccessToken{
 		{
 			PersonalAccessToken: gitlab.PersonalAccessToken{
@@ -273,7 +273,7 @@ func TestConvertGroupAccessTokenToDTOTokens(t *testing.T) {
 
 func TestConvertGroupDeployTokenToDTOTokens(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	input := []*gitlab.DeployToken{
 		{
 			ID:        1,
@@ -302,7 +302,7 @@ func TestConvertGroupDeployTokenToDTOTokens(t *testing.T) {
 
 func TestConvertProjectAccessTokenToDTOTokens(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	input := []*gitlab.ProjectAccessToken{
 		{
 			PersonalAccessToken: gitlab.PersonalAccessToken{
@@ -335,7 +335,7 @@ func TestConvertProjectAccessTokenToDTOTokens(t *testing.T) {
 
 func TestConvertProjectDeployTokenToDTOTokens(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	input := []*gitlab.DeployToken{
 		{
 			ID:        1,
@@ -364,7 +364,7 @@ func TestConvertProjectDeployTokenToDTOTokens(t *testing.T) {
 
 func TestConvertPersonalGitlabTokenToDTOTokens(t *testing.T) {
 	expiresAt := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
-	
+
 	input := []*gitlab.PersonalAccessToken{
 		{
 			ID:        1,
