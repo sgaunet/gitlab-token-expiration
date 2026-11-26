@@ -192,12 +192,17 @@ Use task to compile/create release...
 $ task
 task: [default] task -a
 task: Available tasks for this project:
-* build:            Build the binary
-* default:          List tasks
-* doc:              Start godoc server
-* release:          Create a release
-* snapshot:         Create a snapshot release
+* build:           Build the binary
+* default:         List tasks
+* doc:             Start godoc server
+* lint:            Run linter
+* release:         Create a release
+* snapshot:        Create a snapshot release
+* test:            Run the tests with the race detector
+* vulncheck:       Scan dependencies for known vulnerabilities
 ```
+
+Pull requests to `main` run `task test` in CI (`.github/workflows/tests.yml`).
 
 ## Installation
 

@@ -15,6 +15,11 @@ tasks:
       - go generate ./...
       - golangci-lint run
 
+  test:
+    desc: "Run the tests with the race detector"
+    cmds:
+      - go test -race ./...
+
   vulncheck:
     desc: "Scan dependencies for known vulnerabilities"
     cmds:
