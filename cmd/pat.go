@@ -1,46 +1,33 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"os"
 
-	"github.com/sgaunet/gitlab-token-expiration/pkg/app"
 	"github.com/spf13/cobra"
 )
 
 // patCmd represents the command to list personal access tokens.
 var patCmd = &cobra.Command{
 	Use:   "pat",
-	Short: "List gitlab personal access tokens",
-	Long:  `List personal access tokens from gitlab`,
-	Run: func(_ *cobra.Command, _ []string) {
-		tokenFilter, err := newTokenFilter()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-		v, err := newRenderer()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
-		}
-		a := app.NewApp(v, app.WithRevokedToken(printRevoked))
+	Short: "List your gitlab personal access tokens",
+	Long: `List your personal access tokens.
 
-		// l := initTrace(os.Getenv("DEBUGLEVEL"))
-		// a.SetLogger(l)
-		ctx := context.Background()
-
-		tokens, err := a.GetPersonalAccessTokens(ctx)
+Only your own tokens are listed, even with an administrator token.`,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		cmd.SilenceUsage = true
+		out, err := prepare()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			os.Exit(1)
+			return err
 		}
-		tokens = tokenFilter.Apply(tokens)
-		if err := v.Render(tokens); err != nil {
-			fmt.Fprintf(os.Stderr, "Error rendering tokens: %v\n", err)
-			os.Exit(1)
+		a, err := newApp()
+		if err != nil {
+			return err
 		}
+		tokens, err := a.GetPersonalAccessTokens(cmd.Context())
+		if err != nil {
+			return fmt.Errorf("retrieving personal access tokens: %w", err)
+		}
+		return out.render(a, tokens)
 	},
 }
 

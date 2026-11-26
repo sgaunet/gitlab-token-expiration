@@ -36,41 +36,36 @@ type structuredToken struct {
 	Revoked bool   `json:"revoked" yaml:"revoked"`
 	// ExpiresAt is the expiration date (YYYY-MM-DD), nil when the token never expires.
 	ExpiresAt *string `json:"expires_at" yaml:"expires_at"`
-	// ExpiresInDays is the number of days from today (UTC) to ExpiresAt:
-	// 0 when the token expires today, negative once it has expired,
-	// nil when it never expires.
+	// ExpiresInDays is the number of days from today (UTC) to ExpiresAt, nil
+	// when the token never expires. GitLab tokens stop working at 00:00 UTC on
+	// their expiration date, so 0 or less means the token has expired.
 	ExpiresInDays *int `json:"expires_in_days" yaml:"expires_in_days"`
 }
 
 // StructuredOutput renders the tokens as a JSON or YAML list, for scripts.
 // Colors, header and expiration highlighting do not apply.
 type StructuredOutput struct {
-	format       string
-	w            io.Writer
-	printRevoked bool
-	now          func() time.Time
+	format string
+	w      io.Writer
+	now    func() time.Time
 }
 
 // NewStructuredOutput returns a renderer writing the tokens to w in the given
-// format (FormatJSON or FormatYAML). Revoked tokens are skipped unless
-// printRevoked is set, like in the table output.
-func NewStructuredOutput(format string, w io.Writer, printRevoked bool) (*StructuredOutput, error) {
+// format (FormatJSON or FormatYAML).
+func NewStructuredOutput(format string, w io.Writer) (*StructuredOutput, error) {
 	if format != FormatJSON && format != FormatYAML {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownFormat, format)
 	}
 	if w == nil {
 		w = os.Stdout
 	}
-	return &StructuredOutput{format: format, w: w, printRevoked: printRevoked, now: time.Now}, nil
+	return &StructuredOutput{format: format, w: w, now: time.Now}, nil
 }
 
-// Render writes the tokens. An empty result is written as an empty list.
+// Render writes every given token. An empty result is written as an empty list.
 func (s *StructuredOutput) Render(tokens []dto.Token) error {
 	out := make([]structuredToken, 0, len(tokens))
 	for _, t := range tokens {
-		if !s.printRevoked && t.Revoked {
-			continue
-		}
 		out = append(out, s.toStructured(t))
 	}
 

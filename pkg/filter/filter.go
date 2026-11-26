@@ -1,4 +1,5 @@
-// Package filter selects tokens by name and source with regular expressions.
+// Package filter selects tokens by name and source with regular expressions,
+// and hides revoked tokens.
 package filter
 
 import (
@@ -24,18 +25,20 @@ func CompilePattern(pattern string, ignoreCase bool) (*regexp.Regexp, error) {
 }
 
 // TokenFilter keeps the tokens that match every Include pattern that is set
-// and none of the Exclude patterns that are set. A nil pattern is not set,
-// so the zero value keeps every token.
+// and none of the Exclude patterns that are set. A nil pattern is not set.
+// With HideRevoked, revoked tokens are dropped too. The zero value keeps
+// every token.
 type TokenFilter struct {
 	IncludeName   *regexp.Regexp
 	ExcludeName   *regexp.Regexp
 	IncludeSource *regexp.Regexp
 	ExcludeSource *regexp.Regexp
+	HideRevoked   bool
 }
 
 // Apply returns the tokens kept by the filter, in their original order.
 func (f TokenFilter) Apply(tokens []dto.Token) []dto.Token {
-	if f.IncludeName == nil && f.ExcludeName == nil && f.IncludeSource == nil && f.ExcludeSource == nil {
+	if f == (TokenFilter{}) {
 		return tokens
 	}
 	kept := make([]dto.Token, 0, len(tokens))
@@ -48,6 +51,9 @@ func (f TokenFilter) Apply(tokens []dto.Token) []dto.Token {
 }
 
 func (f TokenFilter) keep(t dto.Token) bool {
+	if f.HideRevoked && t.Revoked {
+		return false
+	}
 	return includes(f.IncludeName, t.Name) && !excludes(f.ExcludeName, t.Name) &&
 		includes(f.IncludeSource, t.Source) && !excludes(f.ExcludeSource, t.Source)
 }

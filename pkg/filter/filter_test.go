@@ -108,6 +108,38 @@ func TestTokenFilter_Apply(t *testing.T) {
 	}
 }
 
+func TestTokenFilter_Apply_HideRevoked(t *testing.T) {
+	tokens := []dto.Token{
+		{ID: 1, Name: "ci", Source: "team-a/app"},
+		{ID: 2, Name: "ci-old", Source: "team-a/app", Revoked: true},
+		{ID: 3, Name: "deploy", Source: "team-b/app", Revoked: true},
+	}
+
+	tests := []struct {
+		name   string
+		filter filter.TokenFilter
+		want   []int64
+	}{
+		{"zero value keeps revoked tokens", filter.TokenFilter{}, []int64{1, 2, 3}},
+		{"hide revoked", filter.TokenFilter{HideRevoked: true}, []int64{1}},
+		{
+			"hide revoked combined with a pattern",
+			filter.TokenFilter{HideRevoked: true, IncludeName: regexp.MustCompile("^ci")},
+			[]int64{1},
+		},
+		{
+			"pattern alone keeps revoked tokens",
+			filter.TokenFilter{IncludeName: regexp.MustCompile("^ci")},
+			[]int64{1, 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tokenIDs(tt.filter.Apply(tokens)))
+		})
+	}
+}
+
 func TestTokenFilter_Apply_EmptyInput(t *testing.T) {
 	f := filter.TokenFilter{IncludeName: regexp.MustCompile("x")}
 	assert.Empty(t, f.Apply(nil))
