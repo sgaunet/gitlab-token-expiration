@@ -1,0 +1,33 @@
+name: tests
+
+# The other workflows run on push or only on main, so a pull request (from a
+# fork in particular) would otherwise be merged without its tests being run.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to the pull request cancels the run of the previous commit.
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Toolchain (Go, task, ...) is pinned in mise.toml
+      - uses: jdx/mise-action@v4
+        with:
+          install: true
+          cache: true
+
+      - name: Run tests
+        run: task test
